@@ -15,7 +15,7 @@ library(ggplot2)
 ```
 
 Agora, vamos importar a nossa base de dados!
-Após importar a base de dados, vou escolher 6 séries que servirão para fazer uma análise bem interessante sobre sua avaliação de acordo com o IMDB.
+Após importar a base de dados do IMDB, vou escolher 6 séries para avaliar.
 
 As séries escolhidas são:
 
@@ -31,11 +31,12 @@ series_from_imdb <- read_csv("https://raw.githubusercontent.com/nazareno/imdb-se
 dataSeries<- series_from_imdb %>% filter(series_name %in% c("How to Get Away with Murder", "13 Reasons Why", "Friends","Modern Family", "Black Mirror", "Grey’s Anatomy"))
 ```
 
+A nossa base de dados fornece inúmeras variáveis, incluindo nome e número do episódio, temporada, avaliação do usuário (nota), link, entre outras. Para responder às duas perguntas, utilizaremos os nomes das séries e a avaliação do usuário por episódio (UserRating), em suma.
 
 **1. Qual das séries que eu escolhi é mais bem avaliada no IMDB? A diferença é grande? Pequena?**
 
-  * A nossa base de dados fornece inúmeras variáveis que podem ser analisadas a fim de responder essa pergunta. Os dados estão agrupados da seguinte forma: Cada episódio da série tem uma nota, então podemos analisar a média ou mediana das notas dos episódios a fim de saber qual possui a maior nota e, dessa forma, descobrir qual a série mais bem avaliada. Nesse caso utilizaremos a mediana.    
-Por que não utilizar a média? Bem, a média é afetada por notas extremas, que podem distorcer onde a maioria das notas se concentram, de forma que podem alterar a percepção final da pessoa que está lendo os dados. Nós estamos mais interessados na **constância das notas**, de forma que uma nota ou outra que sejam pontos fora da curva podem ser desconsiderados.
+Os dados estão agrupados da seguinte forma: Cada episódio da série tem uma nota, então podemos analisar a média ou mediana das notas dos episódios a fim de saber qual possui a maior nota e, dessa forma, descobrir qual a série mais bem avaliada. Nesse caso utilizaremos a mediana.    
+Por que não utilizar a média? Bem, a média é afetada por notas extremas, que podem distorcer onde a maioria das notas se concentram, de forma que podem alterar a percepção final do leitor dos dados. Nós estamos mais interessados na **constância das notas**, de forma que uma nota ou outra que sejam pontos fora da curva podem ser desconsiderados.
 
 Para termos uma análise mais completa dos nossos dados, vamos utilizar um gráfico de caixa, o boxplot. Vou te explicar o que podemos extrair a partir dele.
 
@@ -47,7 +48,7 @@ A parte que daremos mais enfoque no nosso gráfico de caixa são os conceitos de
 
 Vamos ordenar os boxplots abaixo de forma decrescente, da série com maior mediana para menor mediana.
 ```{r}
-dataSeriesBP <- ggplot(dataSeries, aes(x=reorder(series_name, -UserRating, FUN=median), y = UserRating)) + geom_boxplot(aes(color=series_name), show.legend=FALSE) + stat_summary(aes(label=round(..y..,2)), fun.y=median, geom="text", size=2.5, vjust = -0.5) + ggtitle("\t\t\t\t\t Série mais bem avaliada (de acordo com dados do IMDB)") + xlab("Nome da série") + ylab("Nota dos episódios") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+dataSeriesBP <- ggplot(dataSeries, aes(x=reorder(series_name, -UserRating, FUN=median), y = UserRating)) + geom_boxplot(aes(color=series_name), show.legend=FALSE) +  stat_summary(aes(label=round(..y..,2)), fun.y=median, geom="text", size=2.5, vjust = -0.5) + ggtitle("\t\t\t\t\t Série mais bem avaliada (de acordo com dados do IMDB)") + xlab("Nome da série") + ylab("Nota dos episódios") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 dataSeriesBP
 ```
 
@@ -61,21 +62,25 @@ Para efetuar essa análise, podemos utilizar duas ferramentas: O **desvio padrã
 
 O desvio padrão é uma medida utilizada considerando a média das notas de todos os episódios da série. Quanto maior o desvio padrão, mais distante as notas estão da média, ou seja, mais espalhados os dados estão.
 
-Utilizando o desvio padrão, obtemos o seguinte resultado:
+Abaixo, temos um gráfico de pontos onde as séries estão ordenadas de forma crescente pelo desvio padrão. Obtemos o seguinte resultado:
 
 ```{r}
 
-ggplot(dataSeries, aes(x=reorder(series_name, UserRating, FUN=sd), y = UserRating)) + geom_jitter(aes(color=series_name), show.legend=FALSE) + stat_summary(aes(label=round(..y..,2)), fun.y=sd, geom="text", size=2.5, vjust = -0.5) + ggtitle("\t\t\t\t Séries com episódios de qualidade mais irregular (Usando DP)") + xlab("Nome da série e desvio padrão") + ylab("Nota dos episódios") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(dataSeries, aes(x=reorder(series_name, UserRating, FUN=sd), y = UserRating)) + geom_jitter(aes(color=series_name), show.legend=FALSE) + stat_summary(aes(x = series_name, y = UserRating), fun.y = mean, fun.ymin = mean, fun.ymax = mean, geom = "crossbar", width = 0.5, inherit.aes = FALSE) + stat_summary(aes(label=round(..y..,2)), fun.y=sd, geom="text", size=2.5, vjust = -0.5) + ggtitle("\t\t\t\t Séries com episódios de qualidade mais irregular (Usando DP)") + xlab("Nome da série e desvio padrão") + ylab("Nota dos episódios") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
+
+A barrinha no meio representa a média das notas dos episódios. Quanto mais os episódios (pontos) estão distantes dessa barrinha central, maior o desvio padrão e, consequentemente, maior a irregularidade das notas.
 
 Para uma precisão maior, podemos aliar o uso do desvio padrão ao IQR (Intervalo Inter Quartil), que é uma medida que considera a diferença entre o terceiro e primeiro quartil. Quanto maior a largura do boxplot (a diferença entre os quartis), mais os dados estão espalhados/dispersos.
 
-Utilizando o IQR, obtemos o seguinte resultado:
+Vamos utilizar mais uma vez o gráfico de caixa ordenando as séries do menor para o maior IQR. Obtemos o seguinte resultado:
 
 ```{r}
 ggplot(dataSeries, aes(x=reorder(series_name, UserRating, FUN=IQR), y = UserRating)) + geom_boxplot(aes(color=series_name), show.legend=FALSE) + stat_summary(aes(label=round(..y..,2)), fun.y=IQR, geom="text", size=2.5, vjust = -0.5) + ggtitle("\t\t\t\t Séries com episódios de qualidade mais irregular (Usando IQR)") + xlab("Nome da série e IQR") + ylab("Nota dos episódios") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
-Embora o desvio padrão seja muito utilizado, este ainda é afetado por notas extremas e não foca onde a maioria dos valores estão concentrados.  Aliando os dois gráficos acima podemos perceber que as duas séries que variam mais são Black Mirror e 13 Reasons Why, utilizando as duas medidas. Ou seja, as duas apresentam dados irregulares ao considerar o desvio padrão das notas dos episódios e os intervalos inter-quartis.
+Embora o desvio padrão seja muito utilizado, este ainda é afetado por notas extremas e não foca onde a maioria dos valores estão concentrados.  Aliando os dois gráficos acima podemos perceber que as duas séries que variam mais são Black Mirror e 13 Reasons Why, utilizando as duas medidas. Ou seja, as duas apresentam dados irregulares ao considerar o desvio padrão das notas dos episódios e o intervalo inter-quartil.     
+
+
 
 
