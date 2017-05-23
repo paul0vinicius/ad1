@@ -1,0 +1,34 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+1. Os episódios de uma série com duas temporadas, ou menos, possuem maior nota do que episódios de uma série com três ou mais temporadas?
+R: Não necessariamente. Algumas séries com várias temporadas possuem episódios com notas superiores a séries com apenas uma temporada.
+
+2. Quanto mais votos tem um episódio, menor sua nota?
+R: Não necessariamente. O episódio pode receber muitas avaliações positivas.
+
+3. Episódios pilotos tem maior nota do que os demais episódios da série?
+R: Acredito que sim, já que é esperado maior esforço para cativar os espectadores a continuarem assistindo a série.
+
+4. Seasons finales tem maior nota do que os demais episódios da série?
+R: Sim. Seasons finales são oportunidades para fechamentos de conflitos e abertura de novos para a temporada seguinte, o que é avaliado positivamente pelos espectadores.
+
+5. A proporção de notas 10 que os episódios de uma série recebe decai ao decorrer das temporadas?
+R: Não. Algumas séries aumentam essa proporção de notas 10 de uma temporada para outra.
+
+6. Existe algum padrão para as notas baixas de um episódio dentro de uma temporada ou eles ocorrem de forma aleatória?
+R: Acredito que episodios que recebem notas mais baixas seguem um padrão. Os tres anteriores ou proximos, provavelmente tambem receberao nota baixa, por exemplo.
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
