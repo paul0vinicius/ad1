@@ -1,0 +1,84 @@
+---
+title: "Relatório Final"
+author: "Paulo Soares"
+date: "29 de maio de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE,message = FALSE,fig.width = 10, fig.align = "center")
+
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+# Descrevendo os dados
+## Falar das variáveis, dos babados que vão ser analisados e tudo mais...
+
+# Uma rápida discussão sobre tamanho da amostra
+
+Olá! Este texto é uma continuação das análises referentes às séries de televisão, cujo contexto é a disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG).
+
+Vamos explorar os nossos dados e responder perguntas mais capciosas utilizando nossas ferramentas.
+
+A primeira pergunta que iremos responder: Episódios pilotos tem maior nota do que os demais episódios da série?
+
+Nesse contexto, episódios pilotos se referem a todos os primeiros episódios das séries analisadas. A intenção é verificar se este primeiro episódio possui melhor avaliação do que os episódios restantes daquela série. Por melhor avaliação, precisamos definir uma ferramenta de medição, um parâmetro. Temos em nossas mãos a **média** e a **mediana**, novamente. Como vimos na análise passada, a **média** não é o parâmetro de medição mais adequado para esse contexto haja visto que esta é afetada por **valores extremos**, discrepantes de onde há concentração das notas. Como estamos interessados na **constância das notas**, a **mediana** será nosso parâmetro de medição.
+
+A análise se dará da seguinte forma: A nota do episódio piloto será comparada à mediana dos demais episódios da série.
+
+Existem inúmeras séries no nosso banco de dados, de forma que é inviável analisar todas. Vamos simplificar um pouco escolhendo uma **amostra aleatória** contendo **6 séries** e, a partir disso, tirarmos conclusões. 
+
+```{r, message=FALSE}
+series_from_imdb <- read_csv("https://raw.githubusercontent.com/nazareno/imdb-series/master/data/series_from_imdb.csv")
+all_series_name <- unique(series_from_imdb$series_name)
+random_choosed_series <- sample(all_series_name, 6)
+dataSeries <- series_from_imdb %>% filter(series_name %in% random_choosed_series)
+```
+
+```{r}
+
+ratings <- dataSeries %>% filter(series_ep %in% 1) %>% filter(season %in% 1)
+
+ggplot(dataSeries, aes(x=series_name, y = UserRating)) + geom_boxplot(aes(color=series_name), show.legend=FALSE) +  stat_summary(aes(label=round(..y..,2)), fun.y=median, geom="text", size=2.5, vjust = -0.5) + ggtitle("Avaliação das séries") + theme(plot.title = element_text(hjust = 0.5)) + xlab("Nome da série") + ylab("Nota dos episódios") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + geom_point(data=ratings, colour="red")
+
+```
+O valor plotado no boxplot é a mediana das notas dos episódios e o ponto vermelho é a nota do episódio piloto.
+Os resultados estão bem equilibrados, de forma que não podemos concluir muita coisa a partir desse resultado. Podemos perceber que a nossa **amostra** ainda é muito pequena. A nossa **população** possui **31 séries**, o que requer um cálculo especial para aumentar a confiabilidade das nossas conclusões. Então, vamos ver como calcular o **tamanho da amostra**:     
+
+
+![](./calculoamostra.png)
+
+Vamos adotar o valor de p em 0.5 para facilitar, assumindo que a proporção é igual entre séries em que o episódio piloto possui maior valor e onde este não possui o maior valor.
+Adotando o valor de Z=2,575 (Nível de confiança 99%) e margem de erro 'e' em 0.05, temos o valor da amostra=31, que é semelhante ao valor da população. Isso ocorre porque nossa população é relativamente pequena. Como é inviável plotar as 31 séries, vamos aumentar a nossa amostra para 16 séries e vemos se o comportamento se altera.
+
+```{r}
+random_choosed_series <- sample(all_series_name, 16)
+dataSeries <- series_from_imdb %>% filter(series_name %in% random_choosed_series)
+
+ratings <- dataSeries %>% filter(series_ep %in% 1) %>% filter(season %in% 1)
+
+ggplot(dataSeries, aes(x=series_name, y = UserRating)) + geom_boxplot(aes(color=series_name), show.legend=FALSE) +  stat_summary(aes(label=round(..y..,2)), fun.y=median, geom="text", size=2.5, vjust = -0.5) + ggtitle("Avaliação das séries") + theme(plot.title = element_text(hjust = 0.5)) + xlab("Nome da série") + ylab("Nota dos episódios") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + geom_point(data=ratings, colour="red")
+```
+
+O comportamento não se alterou, de forma que, a partir dos resultados vistos acima, podemos concluir que **não é verdade a afirmação à pergunta**, os episódios pilotos nem sempre são melhores do que os demais. Na verdade eles variam muito, podendo ter avaliação iguais ou bem menores do que os demais. Como a amostra é escolhida de forma aleatória, há a possibilidade de pegar séries que tiveram o episódio piloto melhor avaliado ou vice-versa, mas no geral isso não é uma verdade absoluta.
+
+2. A proporção de notas 10 que os episódios de uma série recebe decai ao decorrer das temporadas?
+
+Para essa análise, usaremos a coluna r10 do nosso banco de dados. Vamos verificar o crescimento destes dentro de uma temporada de determinada série e comparar com o crescimento de outra temporada dessa mesma série. Em seguida, vamos verificar se houve uma queda no crescimento das notas 10 em relação as temporadas anteriores.
+
+Vamos diminuir nossa amostra para 6 séries a fim de visualizar melhor os dados. As séries ainda são escolhidas de forma aleatória.
+
+```{r}
+random_choosed_series <- sample(all_series_name, 6)
+dataSeries <- series_from_imdb %>% filter(series_name %in% random_choosed_series)
+
+dataSeries %>% ggplot(aes(x = season_ep,y = r10, color = series_name)) + geom_line() + facet_grid(series_name~season)+ labs(x= "Temporada da Série", y= "Proporção de notas 10")
+```
+
+O gráfico facilmente desmente essa afirmação. Em geral, grande parte das séries sofrem aumento na proporção de notas 10 de temporada para temporada. Se analisarmos os gráficos de uma temporada para outra percebemos que temporadas posteriores têm maiores picos, ou seja, maior proporção de notas 10.
+```{r}
+
+```
+
