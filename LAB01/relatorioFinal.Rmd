@@ -10,7 +10,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,warning = FALSE,message = FALSE,fig.width = 10, fig.align = "center", set.seed(8690))
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE,message = FALSE,fig.width = 10, fig.align = "center", set.seed(2))
 
 library(readr)
 library(dplyr)
@@ -53,7 +53,7 @@ Adotando o valor de Z=2,575 (Nível de confiança 99%) e margem de erro 'e' em 0
 
 Nesse contexto, episódios pilotos se referem a todos os primeiros episódios das séries analisadas. A intenção é verificar se este primeiro episódio possui melhor avaliação do que os episódios restantes daquela série. Por melhor avaliação, precisamos definir uma ferramenta de medição, um parâmetro. Temos em nossas mãos a **média** e a **mediana**, novamente. Como vimos na análise passada, a **média** não é o parâmetro de medição mais adequado para esse contexto haja visto que esta é afetada por **valores extremos**, discrepantes de onde há concentração das notas. Como estamos interessados na **constância das notas**, a **mediana** será nosso parâmetro de medição.
 
-A análise se dará da seguinte forma: A nota do episódio piloto será comparada à mediana dos demais episódios da série. Vamos utilizar um gráfico de caixa (boxplot) para mostrar os resultados. O ponto vermelho representará a nota do episódio piloto. Vamos ver quantos pontos temos acima da mediana, ou seja, quantos pontos ficam acima da barrinha existente no meio do boxplot.  
+A análise se dará da seguinte forma: A nota do episódio piloto será comparada à mediana dos demais episódios da série. Vamos utilizar um gráfico de caixa (boxplot) para mostrar os resultados. Dessa forma também podemos observar a distribuição dos valores, onde estes se concentram, além dos máximos e mínimos. O ponto vermelho representará a nota do episódio piloto. Vamos ver quantos pontos temos acima da mediana, ou seja, quantos pontos ficam acima da barrinha existente no meio do boxplot.  
 Vamos escolher uma **amostra aleatória** contendo **10 séries** e, a partir disso, tiramos as nossas conclusões.
 
 ```{r, message=FALSE}
