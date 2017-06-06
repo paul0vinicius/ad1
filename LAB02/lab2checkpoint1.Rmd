@@ -1,0 +1,70 @@
+---
+title: "LAB2Check1"
+author: "Paulo Vinicius Soares"
+date: "6 de junho de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE,message = FALSE,fig.width = 10, fig.align = "center", set.seed(2))
+
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(plyr)
+```
+
+```{r}
+series_from_imdb <- read_csv("https://raw.githubusercontent.com/nazareno/imdb-series/master/data/series_from_imdb.csv")
+all_series_name <- unique(series_from_imdb$series_name)
+all_series_name
+```
+
+```{r fig.height=7, message=FALSE}
+random_choosed_series <- sample(all_series_name, 10)
+dataSeries <- series_from_imdb %>% filter(series_name %in% random_choosed_series)
+
+ratings <- dataSeries %>% filter(series_ep %in% 1) %>% filter(season %in% 1)
+
+season_finale_eps <- dataSeries %>% group_by(series_name, season) %>% summarise(season_ep = max(season_ep))
+
+season_finale_eps$isSeasonFinale <- TRUE
+
+dataSeries <- right_join(season_finale_eps, dataSeries, by=c("series_name","season","season_ep"))
+
+dataSeries$isSeasonFinale <- ifelse(is.na(dataSeries$isSeasonFinale),FALSE,TRUE)
+
+notasSeasonFinale <- dataSeries %>% filter(isSeasonFinale) %>% summarise(medianas=median(UserRating))
+
+#names(dataSeries)[names(dataSeries) == "series_name"]<- "Nome da série"
+
+p <- ggplot(dataSeries, aes(x=series_name, y = UserRating)) + geom_boxplot(aes(color=series_name), show.legend=FALSE) + ggtitle("Avaliação dos demais episódios VS Avaliação do episódio piloto") + theme(plot.title = element_text(hjust = 0.5)) + xlab("Nome da série") + ylab("Nota dos episódios") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + geom_point(data=ratings, colour="red")
+
+#ggplotly(p)
+
+q <- dataSeries %>% 
+          group_by(series_name,season) %>%
+          summarise(medianas=median(UserRating))
+
+j <- q %>% 
+          group_by(series_name) %>% 
+          summarise(n_seasons=n())
+
+
+
+
+plot_ly(dataSeries %>% 
+          group_by(series_name, season) %>% 
+          summarise(medianas=median(UserRating)), name="Nota geral dos episódios", x=~series_name, y=~medianas, type = "scatter", mode="markers", size=j) %>% add_markers(data=ratings, name="Notas dos episódios pilotos", x=~series_name, y=~UserRating) %>% add_markers(data=notasSeasonFinale, name="Notas das Seasons Finales", x=~series_name, y=~medianas)
+```
+
+```{r fig.height=7}
+w <- dataSeries %>% ggplot(aes(x = season_ep,y = UserRating, color = series_name)) + geom_line() + facet_grid(series_name~season)+ labs(x= "Temporada da Série", y= "Proporção de notas 1") + theme(axis.text.y = element_text(angle = 270, hjust = 1))
+
+ggplotly(w)
+```
