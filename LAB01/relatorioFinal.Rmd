@@ -25,9 +25,9 @@ Vamos explorar os nossos dados e responder perguntas mais capciosas utilizando n
 O nossos dados são da plataforma IMDB, e são constituídos por **31 séries**. Vamos considerar, para facilitar a nossa análise, que esses dados são a nossa **população**.
 
 ```{r}
-series_from_imdb <- read_csv("https://raw.githubusercontent.com/nazareno/imdb-series/master/data/series_from_imdb.csv")
+series_from_imdb <- read_csv("../databases/series_from_imdb.csv")
 all_series_name <- unique(series_from_imdb$series_name)
-all_series_name
+#all_series_name
 ```
 
 Os dados possuem nome, episódio e temporada da série, URL, nome do episódio, avaliação do usuário, quantidade de votos e a proporção de votos de 1-10 para cada episódio.
@@ -72,7 +72,7 @@ A partir dos resultados vistos acima, podemos concluir que **não é verdade a a
 Vamos usar outro gráfico de caixa (boxplot), já que existem mais *seasons finales* do que o episódio piloto. Nossa análise se dará pela **mediana** das notas das *seasons finales* e o ponto vermelho representará a nota do episódio piloto.
 
 ```{r}
-season_finale_eps <- dataSeries %>% group_by(series_name, season) %>% summarise(season_ep = max(season_ep))
+season_finale_eps = dataSeries %>% group_by(series_name, season) %>% summarise(season_ep = max(season_ep))
 
 season_finale_eps$isSeasonFinale <- TRUE
 

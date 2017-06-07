@@ -1,0 +1,54 @@
+---
+title: "lab02checkpoint1"
+author: "Paulo Soares"
+date: "6 de junho de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE,message = FALSE,fig.width = 10, fig.align = "center", set.seed(2))
+
+library(tidyverse)
+library(plotly)
+```
+
+```{r}
+series_from_imdb <- read_csv("../databases/series_from_imdb.csv")
+all_series_name <- unique(series_from_imdb$series_name)
+#all_series_name
+```
+
+```{r fig.height=10, message=FALSE}
+# Escolhe 10 séries aleatoriamente do banco de dados
+random_choosed_series <- sample(all_series_name, 10)
+dataSeries <- series_from_imdb %>% filter(series_name %in% random_choosed_series)
+
+# Trecho de código que seleciona as seasons finales de cada temporada
+season_finale_eps <- dataSeries %>% 
+                      group_by(series_name, season) %>% 
+                      summarise(season_ep = max(season_ep))
+season_finale_eps$isSeasonFinale <- TRUE
+dataSeries <- right_join(season_finale_eps, dataSeries, by=c("series_name","season","season_ep"))
+dataSeries$isSeasonFinale <- ifelse(is.na(dataSeries$isSeasonFinale),FALSE,TRUE)
+notasSeasonFinale <- dataSeries %>% filter(isSeasonFinale)
+
+# Trecho de código que seleciona todos os episódios pilotos
+ratings <- dataSeries %>% filter(series_ep %in% 1) %>% filter(season %in% 1)
+
+# Agrupamento por nome da série e temporada para calcular as medianas de cada série por temporada
+mediansSeries <- dataSeries %>% 
+          group_by(series_name, season) %>%
+          summarise(medians=median(UserRating))
+
+# Plotagem final dos dados usando plotly
+f <- list(
+  size = 10,
+  color = "#7f7f7f"
+)
+
+plot_ly(data=dataSeries, name="Nota geral dos episódios", x=~series_name, y=~UserRating, type = "box") %>%
+  layout(xaxis = list(title = "", tickfont=f), yaxis = list(title = "Nota dos episódios")) %>% 
+  add_markers(data=mediansSeries, name="Mediana dos episódios por temporada", x=~series_name, y=~medians, text=~paste('Temporada: ', season)) %>%
+  add_markers(data=ratings, name="Nota dos episódios pilotos", x=~series_name, y=~UserRating) %>%
+  add_markers(data=notasSeasonFinale, name="Notas das seasons finales", x=~series_name, y=~UserRating, text=~paste('Temporada: ', season))
+```
