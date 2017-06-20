@@ -1,5 +1,5 @@
 ---
-title: "Filmes by Tom Cruise"
+title: "Filmes by Rodrigo Santoro"
 author: "Paulo Vinicius Soares"
 date: "16 de junho de 2017"
 output: 
@@ -23,6 +23,12 @@ library(ggdendro)
 library(fpc)
 source("plota_solucoes_hclust.R")
 ```
+
+Olá! Este texto é uma continuação das análises referentes à disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG). Na análise de hoje iremos abordar os filmes estrelados por **Rodrigo Santoro**, artista brasileiro de grande reconhecimento internacional atuando como galã de vários filmes e com um currículo de dar inveja em qualquer ator.
+
+Nesta análise utilizaremos **duas variáveis** para traçar perfis dos filmes estrelados por Rodrigo. Estas variáveis são o **Box Office** e **Rating**, que apontam para a bilheteria que o filme arrecadou e avaliação pelo público, respectivamente.
+
+Vamos visualizar abaixo os filmes representados por pontos em um gráfico que demonstra a relação entre a bilheteria do filme e sua avaliação pelo público.
 
 ```{r}
 from_page <- read_html("https://www.rottentomatoes.com/celebrity/rodrigo_santoro/") %>% 
@@ -63,5 +69,10 @@ plota_hclusts_2d(agrupamento_h_2d,
                  linkage_method = "centroid", ks = 1:6)
 ```
 
+Agora, utilizando uma técnica chamada **agrupamento** vamos criar blocos que englobam vários filmes atribuindo-lhe uma categoria. 
 
+# As categorias iremos nomear de acordo com a posição desses grupos no gráfico, assim podemos ter noção dos babados.
+
+# Pelo que eu lembro da análise, acho que havia 5 ou 6 grupos coerentes, real. Então assim, é bacana nomear os agrupamentos em ordem crescente nos dois eixos:
+# Filmes de muita bilheteria, porém não muito sucesso com o público e por aí vai, sendo que as categorias tem que ser mais específicas.
 
