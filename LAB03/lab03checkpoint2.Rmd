@@ -1,0 +1,41 @@
+---
+title: "lab03checkpoint2"
+author: "Paulo Vinicius Soares"
+date: "27 de junho de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Imports
+library(tidyverse, warn.conflicts = F)
+library(plotly)
+library(cluster)
+```
+
+```{r}
+characters_imdb <- read_csv("https://raw.githubusercontent.com/matthewfdaniels/scripts/graphs/character_list5.csv")
+movies <- read_csv("https://raw.githubusercontent.com/matthewfdaniels/scripts/graphs/meta_data7.csv")
+
+movies_full_info <- right_join(movies, characters_imdb, by="script_id")
+
+a <- movies_full_info %>% 
+  filter(gender=='m') %>%
+  group_by(title) %>%
+  summarise(n_men = n())
+
+b <- movies_full_info %>% 
+  filter(gender=='f') %>%
+  group_by(title) %>%
+  summarise(n_wom = n())
+
+c <- right_join(movies_full_info, a, by="title")
+
+d <- right_join(c, b, by="title")
+
+plot_ly(d, x=~title,y=~n_men, type="scatter")
+
+```
