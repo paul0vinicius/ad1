@@ -39,11 +39,11 @@ Primeiro, faz-se necessária a análise das linguagens de programação disponí
 Das linguagens disponíveis na amostra, irei escolher duas linguagens bastante populares: C++, cuja extensão é *.cpp*; e Python, cuja extensão do arquivo é *.py*.
 
 ```{r}
-cpp_data <- programming_languages_data %>% filter(file_extension == "cpp")
-python_data <- programming_languages_data %>% filter(file_extension == "py")
+cpp_data <- programming_languages_data %>% filter(file_extension %in% "cpp")
+python_data <- programming_languages_data %>% filter(file_extension %in% "py")
 ```
 
-Agora vamos criar a nossa linha do tempo para as duas linguagens de programação. Vamos filtrar todos os babados apenas pelo mês mesmo, usando os dias e tal
+Agora vamos criar a nossa linha do tempo para as duas linguagens de programação. Vamos filtrar as informações sobre as linguagens de programação pelos meses.
 
 ```{r}
 # Filtering for C++
@@ -71,10 +71,43 @@ python_data.2016 <- python_data %>%
 python_data <- rbind(python_data.2016, python_data.2017)
 ```
 
-Agora lesgo ver como fica esses djabo no plotly
+Utilizando o Plotly para gerar o nosso gráfico podemos visualizar abaixo a linha do tempo para **Python** e **C++**.cpp_data
 ```{r}
-plot_ly(data=cpp_data, x=~the_month, y=~contributions_month, color=as.factor(cpp_data$the_year), showlegends=FALSE) %>% add_markers(hoverinfo = 'text', text=~paste('Linguagem de programação: C++', '<br>Contribuições de usuários (KUsers): ', contributions_month, '<br>Mês: ', the_month, '<br>Ano: ', the_year)) %>% add_markers(data=python_data,x=~the_month, y=~contributions_month, color=as.factor(python_data$the_year))
+# C++ Plotly Data
+plot_ly(data=cpp_data, x=~the_month, y=~contributions_month, color=as.factor(cpp_data$the_year), name="Popularidade por mês de C++") %>% layout(xaxis = list(title = "Mês"), yaxis = list(title = "Contribuição de usuários")) %>% 
+  add_markers(hoverinfo = 'text', text=~paste('Linguagem de programação: C++', '<br>Contribuições de usuários: ', contributions_month, '<br>Mês: ', the_month, '<br>Ano: ', the_year))
+
+# Python Plotly Data
+plot_ly(data=python_data,x=~the_month, y=~contributions_month, color=as.factor(python_data$the_year), name="Popularidade por mês de Python") %>% layout(xaxis = list(title = "Mês"), yaxis = list(title = "Contribuição de usuários")) %>% 
+  add_markers(hoverinfo = 'text', text=~paste('Linguagem de programação: Python', '<br>Contribuições de usuários: ', contributions_month, '<br>Mês: ', the_month, '<br>Ano: ', the_year))
 ```
 
+Agora, vamos agrupar os dados pelos dias de semana e final de semana:
+```{r}
+## C++ Data
+# Selecting the weekend period
+cpp_data_wknd <- cpp_data %>% filter(week_day %in% c("sábado","domingo"))
+
+# Selecting the other days
+cpp_data_wkdays <- cpp_data %>% filter(!week_day %in% c("sábado","domingo"))
+
+
+## Python Data
+# Selecting the weekend period
+python_data_wknd <- python_data %>% filter(week_day %in% c("sábado","domingo"))
+
+# Selecting the other days
+python_data_wkdays <- python_data %>% filter(!week_day %in% c("sábado","domingo"))
+```
+
+## Primeira pergunta: Para cada linguagem de programação há uma diferença significativa na sua popularidade durante a semana e durante o fim de semana? Essa diferença é grande?
+
+```{r}
+# C++ Plotly Data
+plot_ly(data=cpp_data, x=~week_day, y=~(users), type='box', jitter=1)
+```
+
+
+## Segunda pergunta: Existe uma diferença significativa entre as duas linguagens na sua variação de popularidade nos finais de semana?
 
 
