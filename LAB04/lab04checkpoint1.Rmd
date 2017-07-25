@@ -1,0 +1,80 @@
+---
+title: "checkpoint1"
+author: "Paulo Soares"
+date: "25 de julho de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+
+```{r}
+# Library Imports
+library(tidyverse)
+library(plotly)
+```
+
+```{r}
+# database imports
+programming_languages_data <- read.csv("https://raw.githubusercontent.com/nazareno/fpcc2/master/datasets/github-users-committing-filetypes.csv")
+
+# inserting the full date to better analysis
+programming_languages_data <- programming_languages_data %>% mutate(full_date = paste(month_day, the_month, the_year, sep = '-'))
+
+# inserting the weekdays to answer the first question
+programming_languages_data <- programming_languages_data %>% mutate(week_day= weekdays(as.Date(full_date,'%d-%m-%Y')))
+```
+
+```{r}
+unique(programming_languages_data$file_extension)
+```
+Primeiro, faz-se necessária a análise das linguagens de programação disponíveis na nossa amostra. Com o *unique* podemos verificar que existem dados sobre 42 linguagens de programação, das quais iremos escolher **duas** para detalharmos um pouco mais.
+
+```{r}
+# Comentar sobre as variáveis disponíveis nos dados, como a extensão do arquivo, dia, mês e ano, além dos usuários.
+```
+
+Das linguagens disponíveis na amostra, irei escolher duas linguagens bastante populares: C++, cuja extensão é *.cpp*; e Python, cuja extensão do arquivo é *.py*.
+
+```{r}
+cpp_data <- programming_languages_data %>% filter(file_extension == "cpp")
+python_data <- programming_languages_data %>% filter(file_extension == "py")
+```
+
+Agora vamos criar a nossa linha do tempo para as duas linguagens de programação. Vamos filtrar todos os babados apenas pelo mês mesmo, usando os dias e tal
+
+```{r}
+# Filtering for C++
+cpp_data.2017 <- cpp_data %>% 
+  filter(the_year == 2017) %>% 
+  group_by(the_month) %>% 
+  mutate(contributions_month = sum(users))
+cpp_data.2016 <- cpp_data %>% 
+  filter(the_year == 2016) %>% 
+  group_by(the_month) %>% 
+  mutate(contributions_month = sum(users))
+
+cpp_data <- rbind(cpp_data.2016, cpp_data.2017)
+
+# Filtering for Python
+python_data.2017 <- python_data %>% 
+  filter(the_year == 2017) %>% 
+  group_by(the_month) %>% 
+  mutate(contributions_month = sum(users))
+python_data.2016 <- python_data %>% 
+  filter(the_year == 2016) %>% 
+  group_by(the_month) %>% 
+  mutate(contributions_month = sum(users))
+
+python_data <- rbind(python_data.2016, python_data.2017)
+```
+
+Agora lesgo ver como fica esses djabo no plotly
+```{r}
+plot_ly(data=cpp_data, x=~the_month, y=~contributions_month, color=as.factor(cpp_data$the_year), showlegends=FALSE) %>% add_markers(hoverinfo = 'text', text=~paste('Linguagem de programação: C++', '<br>Contribuições de usuários (KUsers): ', contributions_month, '<br>Mês: ', the_month, '<br>Ano: ', the_year)) %>% add_markers(data=python_data,x=~the_month, y=~contributions_month, color=as.factor(python_data$the_year))
+```
+
+
+
