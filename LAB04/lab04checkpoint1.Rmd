@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 # Library Imports
 library(tidyverse)
 library(plotly)
+library(resample)
 ```
 
 ```{r}
@@ -24,7 +25,7 @@ programming_languages_data <- read.csv("https://raw.githubusercontent.com/nazare
 programming_languages_data <- programming_languages_data %>% mutate(full_date = paste(month_day, the_month, the_year, sep = '-'))
 
 # inserting the weekdays to answer the first question
-programming_languages_data <- programming_languages_data %>% mutate(week_day= weekdays(as.Date(full_date,'%d-%m-%Y')))
+programming_languages_data <- programming_languages_data %>% mutate(week_day= weekdays(as.Date(full_date,"%Y-%m-%d")))
 ```
 
 ```{r}
@@ -39,8 +40,8 @@ Primeiro, faz-se necessária a análise das linguagens de programação disponí
 Das linguagens disponíveis na amostra, irei escolher duas linguagens bastante populares: C++, cuja extensão é *.cpp*; e Python, cuja extensão do arquivo é *.py*.
 
 ```{r}
-cpp_data <- programming_languages_data %>% filter(file_extension %in% "cpp")
-python_data <- programming_languages_data %>% filter(file_extension %in% "py")
+cpp_data <- programming_languages_data %>% filter(file_extension == "cpp")
+python_data <- programming_languages_data %>% filter(file_extension == "py")
 ```
 
 Agora vamos criar a nossa linha do tempo para as duas linguagens de programação. Vamos filtrar as informações sobre as linguagens de programação pelos meses.
@@ -84,27 +85,73 @@ plot_ly(data=python_data,x=~the_month, y=~contributions_month, color=as.factor(p
 
 Agora, vamos agrupar os dados pelos dias de semana e final de semana:
 ```{r}
+library(chron)
+
 ## C++ Data
 # Selecting the weekend period
-cpp_data_wknd <- cpp_data %>% filter(week_day %in% c("sábado","domingo"))
-
-# Selecting the other days
-cpp_data_wkdays <- cpp_data %>% filter(!week_day %in% c("sábado","domingo"))
+cpp_data_wknd <- cpp_data %>% mutate(wknd = is.weekend(full_date))
 
 
 ## Python Data
 # Selecting the weekend period
-python_data_wknd <- python_data %>% filter(week_day %in% c("sábado","domingo"))
-
-# Selecting the other days
-python_data_wkdays <- python_data %>% filter(!week_day %in% c("sábado","domingo"))
+python_data_wknd <- python_data %>% mutate(wknd = is.weekend(full_date))
 ```
 
 ## Primeira pergunta: Para cada linguagem de programação há uma diferença significativa na sua popularidade durante a semana e durante o fim de semana? Essa diferença é grande?
 
+Dado que nossos dados refletem uma **amostra**, os resultados podem não ser muito confiáveis, uma vez que não estamos trabalhando com o universo total dos dados, a população. Sabendo desse detalhe, utilizaremos uma técnica chamada *bootstrap* que melhora consideravelmente a confiabilidade dos dados nos permitindo determinar um intervalo de confiança.
+
 ```{r}
-# C++ Plotly Data
-plot_ly(data=cpp_data, x=~week_day, y=~(users), type='box', jitter=1)
+# Plotting the C++ scatter graph
+
+cpp_data_wknd %>%
+  ggplot(aes(x = wknd, y = users)) +
+  geom_jitter(width = .1, color = "#488888") +
+  labs(title = "Atividade de usuários C++", x = "Fim de semana", y = "Usuários") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+```{r}
+# Plotting the Python scatter graph
+python_data_wknd %>%
+  ggplot(aes(x = wknd, y = users)) +
+  geom_jitter(width = .1, color = "#488888") +
+  labs(title = "Atividade de usuários Python", x = "Fim de semana", y = "Usuários") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+```{r}
+# C++ Data Bootstraping
+
+median_cpp <- bootstrap2(cpp_data_wknd$users, 
+                         treatment = cpp_data_wknd$wknd,
+                         median,
+                         R = 15000)
+
+median_cpp_ci <- CI.percentile(median_cpp, probs = c(.025, .975))
+
+data.frame(median_cpp_ci) %>% 
+  ggplot() + 
+  geom_errorbar(aes(x = "Diferença", ymin = X2.5., ymax = X97.5.), width = .2) + 
+  geom_hline(yintercept = 0, colour = "darkorange")
+```
+
+```{r}
+# Python Data Bootstraping
+
+median_python <- bootstrap2(python_data_wknd$users, 
+                         treatment = python_data_wknd$wknd,
+                         median,
+                         R = 15000)
+
+median_python_ci <- CI.percentile(median_python, probs = c(.025, .975))
+
+data.frame(median_python_ci) %>% 
+  ggplot() + 
+  geom_errorbar(aes(x = "Diferença", ymin = X2.5., ymax = X97.5.), width = .2) + 
+  geom_hline(yintercept = 0, colour = "darkorange")
 ```
 
 
