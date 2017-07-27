@@ -1,15 +1,22 @@
 ---
-title: "checkpoint1"
+title: "Análise da popularidade das linguagens de programação: Estrelando C++ e Python"
 author: "Paulo Soares"
 date: "25 de julho de 2017"
-output: html_document
+output: 
+  html_document:
+        toc: true
+        toc_float: true
+        toc_depth: 4
+
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
+# Introdução
+Olá! Este texto é uma continuação das análises referentes à disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG). Na análise de hoje iremos abordar a popularidade das linguagens de programação ao longo de 2016 e parte de 2017 a partir de uma pequena amostra. As linguagens escolhidas para esta análise foram C++ e Python, cujas extensões são *.cpp* e *.py* respectivamente.
 
-
+Agora vamos aos *imports* de biblioteca e dos nossos dados. Além disso, vamos inserir os dias da semana no nosso dataframe para respondermos com mais facilidade as perguntas feitas abaixo.
 ```{r}
 # Library Imports
 library(tidyverse)
@@ -28,22 +35,23 @@ programming_languages_data <- programming_languages_data %>% mutate(full_date = 
 programming_languages_data <- programming_languages_data %>% mutate(week_day= weekdays(as.Date(full_date,"%Y-%m-%d")))
 ```
 
+
+Primeiro, faz-se necessária a análise das linguagens de programação disponíveis na nossa amostra. Com o *unique* podemos verificar que existem dados sobre 42 linguagens de programação.
+
 ```{r}
 unique(programming_languages_data$file_extension)
 ```
-Primeiro, faz-se necessária a análise das linguagens de programação disponíveis na nossa amostra. Com o *unique* podemos verificar que existem dados sobre 42 linguagens de programação, das quais iremos escolher **duas** para detalharmos um pouco mais.
 
-```{r}
-# Comentar sobre as variáveis disponíveis nos dados, como a extensão do arquivo, dia, mês e ano, além dos usuários.
-```
 
-Das linguagens disponíveis na amostra, irei escolher duas linguagens bastante populares: C++, cuja extensão é *.cpp*; e Python, cuja extensão do arquivo é *.py*.
+Os nossos dados possuem informações tais quais: Extensão do arquivo, dia, mês e ano e número de contribuições por usuário para cada dia.
 
+Vamos filtrar as linguagens e começar a nossa análise então!
 ```{r}
 cpp_data <- programming_languages_data %>% filter(file_extension == "cpp")
 python_data <- programming_languages_data %>% filter(file_extension == "py")
 ```
 
+# Linha do tempo das nossas linguagens de programação
 Agora vamos criar a nossa linha do tempo para as duas linguagens de programação. Vamos filtrar as informações sobre as linguagens de programação pelos meses.
 
 ```{r}
@@ -72,61 +80,69 @@ python_data.2016 <- python_data %>%
 python_data <- rbind(python_data.2016, python_data.2017)
 ```
 
-Utilizando o Plotly para gerar o nosso gráfico podemos visualizar abaixo a linha do tempo para **Python** e **C++**.cpp_data
+
+Utilizando o Plotly para gerar o nosso gráfico podemos visualizar abaixo a linha do tempo para **Python** e **C++**.
+
+## Linha do tempo para C++
 ```{r}
 # C++ Plotly Data
 plot_ly(data=cpp_data, x=~the_month, y=~contributions_month, color=as.factor(cpp_data$the_year), name="Popularidade por mês de C++") %>% layout(xaxis = list(title = "Mês"), yaxis = list(title = "Contribuição de usuários")) %>% 
   add_markers(hoverinfo = 'text', text=~paste('Linguagem de programação: C++', '<br>Contribuições de usuários: ', contributions_month, '<br>Mês: ', the_month, '<br>Ano: ', the_year))
+```
 
+Podemos ver que ao longo dos dois anos, os meses compreendidos entre Janeiro e Março possuem a maior contribuição, seguidos de uma relativa queda. O mês de Maio de 2017 apresenta um outlier gritante comparado aos demais. Algum evento marcante aconteceu aqui! Em geral houve mais contribuição no ano de 2016 do que nesse ano, mesmo para os primeiros meses.
+
+## Linha do tempo para Python
+```{r}
 # Python Plotly Data
 plot_ly(data=python_data,x=~the_month, y=~contributions_month, color=as.factor(python_data$the_year), name="Popularidade por mês de Python") %>% layout(xaxis = list(title = "Mês"), yaxis = list(title = "Contribuição de usuários")) %>% 
   add_markers(hoverinfo = 'text', text=~paste('Linguagem de programação: Python', '<br>Contribuições de usuários: ', contributions_month, '<br>Mês: ', the_month, '<br>Ano: ', the_year))
 ```
 
-Agora, vamos agrupar os dados pelos dias de semana e final de semana:
+Podemos observar que para o ano de 2016 houve um crescimento semelhante ao ocorrido para a linguagem C++, crescendo nos três primeiros meses e decaindo ao longo do ano e tendo um leve aumento em Agosto e Outubro. Para o ano de 2017 o comportamento mudou um pouco, caindo em Fevereiro e em Maio de 2017 apresentando o mesmo outlier visto em C++. Parece que Maio foi um mês bastante conturbado para os nossos amigos contribuidores.
+
+# Primeira pergunta: Para cada linguagem de programação há uma diferença significativa na sua popularidade durante a semana e durante o fim de semana? Essa diferença é grande?
+
+Agora, vamos agrupar os dados pelos dias de semana e final de semana a fim de responder a essa pergunta.
 ```{r}
 library(chron)
 
 ## C++ Data
 # Selecting the weekend period
-cpp_data_wknd <- cpp_data %>% mutate(wknd = is.weekend(full_date))
+cpp_data <- cpp_data %>% mutate(iswknd = is.weekend(full_date))
 
 
 ## Python Data
 # Selecting the weekend period
-python_data_wknd <- python_data %>% mutate(wknd = is.weekend(full_date))
+python_data <- python_data %>% mutate(iswknd = is.weekend(full_date))
 ```
 
-## Primeira pergunta: Para cada linguagem de programação há uma diferença significativa na sua popularidade durante a semana e durante o fim de semana? Essa diferença é grande?
-
-Dado que nossos dados refletem uma **amostra**, os resultados podem não ser muito confiáveis, uma vez que não estamos trabalhando com o universo total dos dados, a população. Sabendo desse detalhe, utilizaremos uma técnica chamada *bootstrap* que melhora consideravelmente a confiabilidade dos dados nos permitindo determinar um intervalo de confiança.
+## Scatterplot de C++
+Agora que já separamos os nossos dados por **dias de semana** e **finais de semana** podemos utilizar um *scatterplot* e verificar como se comporta a nossa distribuição entre esses dois grupos.
 
 ```{r}
 # Plotting the C++ scatter graph
 
-cpp_data_wknd %>%
-  ggplot(aes(x = wknd, y = users)) +
-  geom_jitter(width = .1, color = "#488888") +
+cpp_plot <- cpp_data %>%
+  ggplot(aes(x = iswknd, y = users)) +
+  geom_jitter(width = .1, color = "blue") +
   labs(title = "Atividade de usuários C++", x = "Fim de semana", y = "Usuários") +
   theme(plot.title = element_text(hjust = 0.5))
+
+cpp_plot
 ```
 
+Podemos inferir, a partir do gráfico, que as contribuições ocorrem relativamente na mesma quantidade, ou seja, não há diferença significativa nas contribuições ocorridas entre os dias de semana e finais de semana.
 
-```{r}
-# Plotting the Python scatter graph
-python_data_wknd %>%
-  ggplot(aes(x = wknd, y = users)) +
-  geom_jitter(width = .1, color = "#488888") +
-  labs(title = "Atividade de usuários Python", x = "Fim de semana", y = "Usuários") +
-  theme(plot.title = element_text(hjust = 0.5))
-```
+## Utilizando bootstrap para aumentar a confiabilidade dos dados em C++
 
+Uma vez que nossos dados representam uma **amostra**, os resultados não são muito confiáveis - ou generalizáveis, haja visto que não estamos trabalhando com o universo total dos dados, a população. Sabendo desse detalhe, utilizaremos uma técnica chamada *bootstrap* que melhora consideravelmente a confiabilidade dos dados nos permitindo determinar um intervalo de confiança na diferença absoluta das contribuições ocorridas entre os dias de semana e finais de semana. Para esse caso, utilizaremos um intervalo de confiança de 95%.
 
 ```{r}
 # C++ Data Bootstraping
 
-median_cpp <- bootstrap2(cpp_data_wknd$users, 
-                         treatment = cpp_data_wknd$wknd,
+median_cpp <- bootstrap2(cpp_data$users, 
+                         treatment = cpp_data$iswknd,
                          median,
                          R = 15000)
 
@@ -134,15 +150,37 @@ median_cpp_ci <- CI.percentile(median_cpp, probs = c(.025, .975))
 
 data.frame(median_cpp_ci) %>% 
   ggplot() + 
-  geom_errorbar(aes(x = "Diferença", ymin = X2.5., ymax = X97.5.), width = .2) + 
-  geom_hline(yintercept = 0, colour = "darkorange")
+  geom_errorbar(aes(x = "Intervalo de confiança da diferença entre as medianas", ymin = X2.5., ymax = X97.5.), width = .2) + 
+  geom_hline(yintercept = 0, colour = "red")
 ```
+
+A partir do gráfico acima podemos confirmar a nossa hipótese. **Não existe diferença significativa entre as contribuições nos dias de semana e finais de semana para a linguagem C++**. Perceba, o intervalo de confiança nos fornece um limite superior e inferior para os valores da diferença entre as contribuições nos finais de semana e em dias de semana. Logo, as diferenças podem estar positivas - ou seja, houve mais contribuições na semana do que aos fins de semana, ou negativas - houve mais contribuições no final de semana do que na semana, de forma que é possível afirmar com 95% de confiança que não há diferença entre as contribuições nos dois casos.
+
+## Scatterplot de Python
+Bom, agora que já terminamos a análise para C++, vamos analisar o comportamento de Python. O modo de análise será semelhante ao que fizemos para C++. Primeiro, vamos plotar o *scatterplot*.
+
+```{r}
+# Plotting the Python scatter graph
+python_plot <- python_data %>%
+  ggplot(aes(x = iswknd, y = users)) +
+  geom_jitter(width = .1, color = "blue") +
+  labs(title = "Atividade de usuários Python", x = "Fim de semana", y = "Usuários") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+python_plot
+```
+
+O gráfico está bem parecido com o que foi gerado para C++, de forma que não é possível ver diferenças significativas entre as duas categorias analisadas: finais de semana e dias de semana.
+
+## Utilizando bootstrap para aumentar a confiabilidade dos dados em Python
+Vamos proceder da mesma forma, utilizando o *bootstrap* para aumentar a confiabilidade da nossa amostra e determinar o intervalo de confiança dessa diferença e, assim, verificar que não há diferença significativa. Utilizaremos o intervalo com 95% de confiança.
+
 
 ```{r}
 # Python Data Bootstraping
 
-median_python <- bootstrap2(python_data_wknd$users, 
-                         treatment = python_data_wknd$wknd,
+median_python <- bootstrap2(python_data$users, 
+                         treatment = python_data$iswknd,
                          median,
                          R = 15000)
 
@@ -150,11 +188,50 @@ median_python_ci <- CI.percentile(median_python, probs = c(.025, .975))
 
 data.frame(median_python_ci) %>% 
   ggplot() + 
-  geom_errorbar(aes(x = "Diferença", ymin = X2.5., ymax = X97.5.), width = .2) + 
-  geom_hline(yintercept = 0, colour = "darkorange")
+  geom_errorbar(aes(x = "Intervalo de confiança da diferença entre as medianas", ymin = X2.5., ymax = X97.5.), width = .2) + 
+  geom_hline(yintercept = 0, colour = "red")
 ```
 
+Mais uma vez verificamos que o intervalo de confiança abrange valores positivos e negativos, de forma que **não há diferença significativa entre as contribuições nos dias de semana e finais de semana para a linguagem Python**.
 
-## Segunda pergunta: Existe uma diferença significativa entre as duas linguagens na sua variação de popularidade nos finais de semana?
+# Segunda pergunta: Existe uma diferença significativa entre as duas linguagens na sua variação de popularidade nos finais de semana?
+
+Para responder a essa pergunta, precisamos criar novos dataframes contendo apenas as contribuições ocorridas aos finais de semana.
+```{r}
+cpp_data_wkend <- cpp_data %>% filter(iswknd == TRUE)
+python_data_wkend <- python_data %>% filter(iswknd == TRUE)
+```
+
+## Boxplot das contribuições para Python e C++ aos finais de semana
+Para medir a variação da popularidade temos duas alternativas: Usar o IQR, ou usar o Desvio Padrão. Para evitar outliers que podem influenciar nos valores da média e, consequentemente, no desvio padrão. Então, utilizaremos o IQR nesse caso. Vamos adotar o mesmo método de análise para esta pergunta. Primeiro, vamos plotar um *boxplot* a fim de verificar essa variação com mais facilidade.
+
+```{r}
+plot_ly(data=cpp_data_wkend, y=~users, type="box", name="Contribuições em C++") %>% 
+  add_boxplot(data=python_data_wkend, y=~users, name="Contribuições em Python") %>%
+  layout(yaxis = list(title = "Contribuição de usuários"))
+```
+
+De acordo com o gráfico acima podemos ver claramente que Python apresenta um *boxplot* mais 'esticado', o que significa que há maior variação e, consequentemente, maior IQR nas suas contribuições. 
+
+## Utilizando bootstrap para aumentar a confiabilidade da variação dos dados
+Utilizaremos o *bootstrap* novamente para estimar o intervalo de confiança e assegurar a significância da variação. O intervalo será de 95% de confiança.
+
+```{r}
+# Using IQR Measure because we are already using the median measure to avoid extreme values influences, that's why we won't use the standard deviation measure.
+iqr_diff <- bootstrap2(data = cpp_data_wkend$users, 
+               data2 = python_data_wkend$users,
+               IQR)
+iqr_diff_ci = CI.percentile(iqr_diff, probs = c(.025, .975))
+
+data.frame(iqr_diff_ci) %>% 
+  ggplot(aes(x = "Intervalo de confiança da diferença entre as medianas", ymin = X2.5., ymax = X97.5.)) + 
+  geom_errorbar(width = .2) + 
+  geom_hline(yintercept = 0, colour = "red")
+```
+
+Como podemos ver, **há uma diferença significativa, e bem grande, na variação de contribuições para a linguagem Python**. Podemos afirmar com 95% de confiança, que foi o intervalo de confiança gerado para esta análise utilizando o *bootstrap*.
+
+Essa foi a análise dessa semana, pessoal. Espero que tenham gostado e até a próxima!
 
 
+*Agradecimentos especiais à Luiza e Gileade pela ajuda e explicações.*
