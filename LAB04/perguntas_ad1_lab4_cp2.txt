@@ -1,0 +1,17 @@
+1ª pergunta: Será que existe uma diferença entre as contribuições que ocorrem ao fim do ano e no início do ano?
+Acredito que sim, no início do ano deve haver uma maior quantidade de contribuições. No fim do ano, devido às festividades e tudo mais, há uma queda na produtividade.
+
+2ª pergunta: Qual linguagem apresentou o maior crescimento em suas contribuições no período analisado, entre C++ e Python?
+Eu acho que Python apresentou um crescimento maior de contribuições do que C++. Python vem se popularizando bastante nos últimos anos e isso influencia diretamente nas suas contribuições.
+
+3ª pergunta: Ao analisar o período de Maio de 2017, para as linguagens C++ e Python, verifiquei que houve uma queda brusca nas contribuições para ambas comparada aos demais meses. É possível que isso tenha ocorrido com outra linguagem de programação?
+É bem possível que tenha ocorrido algum evento nesse mês que causou um baque nas contribuições em linguagens populares, tais quais Java, C, HTML, Ruby, entre outros.
+
+4ª pergunta: Quais são as 3 linguagens com maior contribuição, em geral, nos repositórios do Github?
+Markdown, é bem popular, acredito que será a primeira do pódio. A segunda acho que será HTML e por último JavaScript.
+
+5ª pergunta: Qual o período do mês onde há maior contribuição, geralmente, para uma linguagem? Seria no início, no meio ou no fim do mês?
+Essa é meio difícil de responder, mas acredito que no início do mês deve ter maior esforço nas contribuições porque o pessoal está empolgado por um novo ciclo que se inicia. No meio do mês deve ficar aquela coisa meio morna e no final do mês deve ser irrelevante.
+
+6ª pergunta: Qual o período do mês que ocorre a maior variação nas contribuições para uma linguagem?
+Acredito que no meio do mês. Essa coisa "meio morna" deve conter alguns números interessantes, com contribuições bem altas e outras bem baixas.
