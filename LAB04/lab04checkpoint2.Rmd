@@ -1,0 +1,14 @@
+---
+title: "checkpoint2"
+author: "Paulo Vinicius Soares"
+date: "1 de agosto de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+```
+
