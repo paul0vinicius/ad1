@@ -1,0 +1,113 @@
+---
+title: "Análise da popularidade das linguagens de programação: Parte 2"
+author: "Paulo Vinicius Soares"
+date: "1 de agosto de 2017"
+output: 
+  html_document:
+        toc: true
+        toc_float: true
+        toc_depth: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Introdução
+
+Olá! Este texto é uma continuação das análises referentes à disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG). Nesse *post* iremos formular duas perguntas sobre o repositório do Github e derivar mais duas perguntas a partir destas. Vamos lá?
+
+Agora vamos aos *imports* de biblioteca e dos nossos dados. Além disso, vamos inserir os dias da semana no nosso dataframe para respondermos com mais facilidade as perguntas feitas abaixo.
+
+```{r}
+# Library Imports
+library(tidyverse)
+library(plotly)
+library(resample)
+```
+
+```{r}
+# database imports
+programming_languages_data <- read.csv("https://raw.githubusercontent.com/nazareno/fpcc2/master/datasets/github-users-committing-filetypes.csv")
+
+# inserting the full date to better analysis
+programming_languages_data <- programming_languages_data %>% mutate(full_date = paste(month_day, the_month, the_year, sep = '-'))
+
+# inserting the weekdays to answer the first question
+programming_languages_data <- programming_languages_data %>% mutate(week_day= weekdays(as.Date(full_date,"%Y-%m-%d")))
+```
+
+# Primeira pergunta: Quais são as 3 linguagens com maior contribuição, em geral, nos repositórios do Github?
+
+Vamos responder essa pergunta a partir da nossa amostra, mas devemos ter em mente que ela não abrange todas as linguagens de programação existentes. A nossa amostra contem 42 linguagens de programação. Podemos confirmar isso usando o *unique*
+
+```{r}
+unique(programming_languages_data$file_extension)
+```
+
+Vamos verificar quais são as top 3 linguagens do Github. O gráfico abaixo apresenta todas as linguagens disponíveis na nossa amostra. Para mais detalhes, dê um zoom na sua linguagem de programação favorita e veja a colocação dela no ranking.
+
+```{r}
+# Summing all the contributions ever made.
+sum_contributions_by_language <- programming_languages_data %>% 
+  group_by(file_extension) %>%
+  mutate(contributions = sum(users))
+
+sum_contributions_by_language <- sum_contributions_by_language %>% 
+  group_by(file_extension) %>%
+  mutate(median_contributions = median(users))
+
+CI_languages <- data.frame("file_extension"=character(),"y_max"=integer(),"y_min"=integer())
+
+programming_languages_names <- unique(programming_languages_data$file_extension)
+
+for (i in programming_languages_names){
+  median_contributions <- sum_contributions_by_language %>% filter(file_extension %in% i)
+  median_contributions_i <- bootstrap(median_contributions, median(users), R = 10000) %>% 
+  CI.percentile(probs = c(.025, .975))
+  
+  median_contributions_i <- data.frame(median_contributions_i)
+  
+  CI_languages <- rbind(CI_languages, data.frame("file_extension"=i, "y_max"=median_contributions_i$X97.5., "y_min"=median_contributions_i$X2.5.))
+}
+
+# md_contributions <- sum_contributions_by_language %>% filter(file_extension %in% "md")
+# 
+# median_contributions_md <- bootstrap(md_contributions, median(users), R = 10000) %>% 
+#   CI.percentile(probs = c(.025, .975))
+# median_contributions_md <- data.frame(median_contributions_md)
+```
+
+```{r}
+# Reorder by contributions, decreasing order.
+sum_contributions_by_language$file_extension <- factor(sum_contributions_by_language$file_extension, levels = unique(sum_contributions_by_language$file_extension)[order(sum_contributions_by_language$contributions, decreasing = TRUE)])
+
+sum_contributions_by_language <- right_join(CI_languages, sum_contributions_by_language,by="file_extension")
+
+p <- ggplot(sum_contributions_by_language,aes(x=file_extension, y=median_contributions)) + geom_point() +
+  geom_errorbar(aes(ymin=y_min, ymax=y_max))
+
+ggplotly(p)
+
+# # Plot using Plotly
+# plot_ly(data=sum_contributions_by_language, x=~file_extension, y=~median_contributions, type="scatter", mode="markers") %>%
+#   layout(xaxis = list(title = ""), yaxis = list(title = "Contribuição de usuários"), showlegends=FALSE) #%>%
+# #   #add_markers(hoverinfo = 'text', text=~paste('Linguagem de programação/Extensão do arquivo: ', file_extension, '<br>Contribuições de usuários: ', median_contributions))
+```
+
+Como podemos perceber no gráfico acima, as três linguagens mais famosas, ou os formatos de arquivo mais frequentes são: *.md*, Markdown; *.js*, JavaScript e *.json*. O Markdown é frequentemente usado no README que é inicializado no repositório do Github, o que poderia explicar o seu primeiro lugar no pódio. Se analisarmos somente linguagens de programação, JavaScript seria a primeira colocada, Python a segunda e Java a terceira.
+
+## Segunda pergunta: Quais são as 3 linguagens com menor contribuição, em geral, nos repositórios do Github?
+
+Certo, vimos quais são as três mais populares... Mas, quais são as três linguagens de programação mais "tímidas"? Ou seja, aquelas que receberam o menor número de contribuições?
+
+O gráfico acima pode responder esta pergunta. Se verificarmos os pontos mais baixos no gráfico iremos identificar *.pdf*, *.config* e *.ico*. Estes se referem à extensões de arquivo, mas se dermos uma olhada mais cuidadosa em linguagens de programação, identificaremos: *.cc* que é uma extensão referente ao código fonte de C++; *.swift*, referente à linguagem de programação Swift e *.sql*, referente à linguagem de programação SQL.
+
+
+# Terceira pergunta: Qual o período do mês onde há maior contribuição, geralmente, para uma linguagem? Seria no início, no meio ou no fim do mês?
+
+## Quarta pergunta: E em que período há menor contribuição?
+```{r}
+
+```
+
