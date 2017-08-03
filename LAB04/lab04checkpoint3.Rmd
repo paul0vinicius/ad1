@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 Olá! Este texto é uma continuação das análises referentes à disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG). Nesse *post* iremos formular duas perguntas sobre o repositório do Github e derivar mais duas perguntas a partir destas. Vamos lá?
 
-Agora vamos aos *imports* de biblioteca e dos nossos dados. Além disso, vamos inserir os dias da semana no nosso dataframe para respondermos com mais facilidade as perguntas feitas abaixo.
+Agora vamos aos *imports* de biblioteca e dos nossos dados.
 
 ```{r}
 # Library Imports
@@ -29,12 +29,6 @@ library(resample)
 ```{r}
 # database imports
 programming_languages_data <- read.csv("https://raw.githubusercontent.com/nazareno/fpcc2/master/datasets/github-users-committing-filetypes.csv")
-
-# inserting the full date to better analysis
-programming_languages_data <- programming_languages_data %>% mutate(full_date = paste(month_day, the_month, the_year, sep = '-'))
-
-# inserting the weekdays to answer the first question
-programming_languages_data <- programming_languages_data %>% mutate(week_day= weekdays(as.Date(full_date,"%Y-%m-%d")))
 ```
 
 # Primeira pergunta: Quais são as 3 linguagens com maior contribuição, em geral, nos repositórios do Github?
@@ -53,14 +47,17 @@ sum_contributions_by_language <- programming_languages_data %>%
   group_by(file_extension) %>%
   mutate(contributions = sum(users))
 
+# Getting the median of contributions.
 sum_contributions_by_language <- sum_contributions_by_language %>% 
   group_by(file_extension) %>%
   mutate(median_contributions = median(users))
 
+# Creating dataframe to store the languages' CI.
 CI_languages <- data.frame("file_extension"=character(),"y_max"=integer(),"y_min"=integer())
 
 programming_languages_names <- unique(programming_languages_data$file_extension)
 
+# Appending the CI to the data frame.
 for (i in programming_languages_names){
   median_contributions <- sum_contributions_by_language %>% filter(file_extension %in% i)
   median_contributions_i <- bootstrap(median_contributions, median(users), R = 10000) %>% 
@@ -70,29 +67,20 @@ for (i in programming_languages_names){
   
   CI_languages <- rbind(CI_languages, data.frame("file_extension"=i, "y_max"=median_contributions_i$X97.5., "y_min"=median_contributions_i$X2.5.))
 }
-
-# md_contributions <- sum_contributions_by_language %>% filter(file_extension %in% "md")
-# 
-# median_contributions_md <- bootstrap(md_contributions, median(users), R = 10000) %>% 
-#   CI.percentile(probs = c(.025, .975))
-# median_contributions_md <- data.frame(median_contributions_md)
 ```
 
 ```{r}
 # Reorder by contributions, decreasing order.
 sum_contributions_by_language$file_extension <- factor(sum_contributions_by_language$file_extension, levels = unique(sum_contributions_by_language$file_extension)[order(sum_contributions_by_language$contributions, decreasing = TRUE)])
 
+# Right join to add the CIs to the original data frame.
 sum_contributions_by_language <- right_join(CI_languages, sum_contributions_by_language,by="file_extension")
 
+# Plot the result using ggplotly
 p <- ggplot(sum_contributions_by_language,aes(x=file_extension, y=median_contributions)) + geom_point() +
-  geom_errorbar(aes(ymin=y_min, ymax=y_max))
+  geom_errorbar(aes(ymin=y_min, ymax=y_max))+ xlab("Extensão do arquivo/Linguagem de programação") + ylab("Mediana da contribuição")
 
 ggplotly(p)
-
-# # Plot using Plotly
-# plot_ly(data=sum_contributions_by_language, x=~file_extension, y=~median_contributions, type="scatter", mode="markers") %>%
-#   layout(xaxis = list(title = ""), yaxis = list(title = "Contribuição de usuários"), showlegends=FALSE) #%>%
-# #   #add_markers(hoverinfo = 'text', text=~paste('Linguagem de programação/Extensão do arquivo: ', file_extension, '<br>Contribuições de usuários: ', median_contributions))
 ```
 
 Como podemos perceber no gráfico acima, as três linguagens mais famosas, ou os formatos de arquivo mais frequentes são: *.md*, Markdown; *.js*, JavaScript e *.json*. O Markdown é frequentemente usado no README que é inicializado no repositório do Github, o que poderia explicar o seu primeiro lugar no pódio. Se analisarmos somente linguagens de programação, JavaScript seria a primeira colocada, Python a segunda e Java a terceira.
@@ -106,8 +94,146 @@ O gráfico acima pode responder esta pergunta. Se verificarmos os pontos mais ba
 
 # Terceira pergunta: Qual o período do mês onde há maior contribuição, geralmente, para uma linguagem? Seria no início, no meio ou no fim do mês?
 
-## Quarta pergunta: E em que período há menor contribuição?
-```{r}
+Primeiramente, faz-se necessária a divisão entre início, meio e fim do mês. Vamos considerar da seguinte forma:   
+  - Do dia 1 ao dia 10: Início do mês;  
+  - Do dia 11 ao dia 20: Meio do mês;  
+  - Do dia 21 ao dia 28/29/30/31: Fim do mês.
+  
+Agora que temos os nossos períodos de tempo bem definidos, vamos separar todas as contribuições que ocorreram nesse período.
 
+```{r}
+beginning_month <- programming_languages_data %>% filter(month_day >= 1 & month_day <= 10)
+middle_month <- programming_languages_data %>% filter(month_day > 10 & month_day <= 20)
+end_month <- programming_languages_data %>% filter(month_day > 20)
 ```
 
+Vamos plotar o gráfico usando o Plotly.
+
+```{r}
+plot_ly(data=beginning_month, y=~users, type="box", name="Contribuições no início do mês") %>%
+  add_boxplot(data=middle_month, y=~users, name="Contribuições no meio do mês") %>%
+  add_boxplot(data=end_month, y=~users, name="Contribuições no fim do mês") %>%
+  layout(yaxis = list(title = "Contribuição de usuários"))
+```
+
+Através de um *boxplot* podemos visualizar melhor as diferenças entre os períodos, de forma que é quase impossível determinar onde houve mais contribuições ou menos contribuições. Se tomarmos a mediana como medida para comparação - o que é recomendado nesse caso devido aos *outliers* presentes na amostra - podemos ver que, por muito pouco, no meio do mês ocorre o maior número de contribuições no Github.
+
+Mas, será que podemos generalizar essa afirmação? Ou seja, será que esse resultado é **significativo** perante a população? Vamos descobrir.
+
+Para verificar a generalização dessa afirmação, vamos usar o *bootstrap* comparando as diferenças entre as medianas da amostra. Essa comparação ocorrerá por pares. Primeiro vamos comparar início do mês VS. meio do mês, depois início do mês VS. fim do mês e por último meio do mês VS. fim do mês.
+
+```{r}
+# Beggining of the month VS. Middle of the month Bootstraping Data.
+
+median_bvsm <- bootstrap2(data=beginning_month$users, data2=middle_month$users, median,
+                         R = 15000)
+
+medians_diff_bvsm <- CI.percentile(median_bvsm, probs = c(.025, .975))
+
+data.frame(medians_diff_bvsm) %>% 
+  ggplot() + 
+  geom_errorbar(aes(x = "Intervalo de confiança da diferença entre as medianas", ymin = X2.5., ymax = X97.5.), width = .2) + 
+  geom_hline(yintercept = 0, colour = "red")
+```
+
+Ou seja, **não podemos afirmar que existe diferença significativa entre as contribuições ocorridas no início do mês e no meio do mês**, já que o intervalo de confiança da diferença entre as medianas se encontra interceptado pelo 0.
+
+Agora vamos comparar início e fim do mês.
+
+```{r}
+# Beggining of the month VS. End of the month Bootstraping Data.
+
+median_bvse <- bootstrap2(data=beginning_month$users, data2=end_month$users, median,
+                         R = 15000)
+
+medians_diff_bvse <- CI.percentile(median_bvse, probs = c(.025, .975))
+
+data.frame(medians_diff_bvse) %>% 
+  ggplot() + 
+  geom_errorbar(aes(x = "Intervalo de confiança da diferença entre as medianas", ymin = X2.5., ymax = X97.5.), width = .2) + 
+  geom_hline(yintercept = 0, colour = "red")
+```
+
+Novamente, temos a mesma situação do quadro anterior: O intervalo de confiança é interceptado pelo 0. Logo, **não temos diferença significativa entre as contribuições ocorridas no início e no fim do mês**.
+
+Por último, vamos analisar meio e fim do mês.
+
+```{r}
+# Middle of the month VS. End of the month Bootstraping Data.
+
+median_mvse <- bootstrap2(data=middle_month$users, data2=end_month$users, median,
+                         R = 15000)
+
+medians_diff_mvse <- CI.percentile(median_mvse, probs = c(.025, .975))
+
+data.frame(medians_diff_mvse) %>% 
+  ggplot() + 
+  geom_errorbar(aes(x = "Intervalo de confiança da diferença entre as medianas", ymin = X2.5., ymax = X97.5.), width = .2) + 
+  geom_hline(yintercept = 0, colour = "red")
+```
+
+Mais uma vez podemos ver que **não existe diferença significativa entre as contribuições ocorridas no meio do mês e no fim do mês**.
+
+Em suma, não podemos afirmar que existe um período onde há mais contribuição do que outro. Em geral, todos se equilibram ao longo do mês.
+
+## Quarta pergunta: Mas, será que para Python o comportamento é o mesmo?
+
+Será que os programadores de Python seguem o mesmo padrão da resposta obtida acima? Vamos confirmar isso.
+
+```{r}
+python_data <- programming_languages_data %>% filter(file_extension %in% "py")
+beg_py_data <- python_data %>% filter(month_day >= 1 & month_day <= 10)
+mid_py_data <- python_data %>% filter(month_day > 10 & month_day <= 20)
+end_py_data <- python_data %>% filter(month_day > 20)
+``` 
+
+```{r}
+plot_ly(data=beg_py_data, y=~users, type="box", name="Contribuições no início do mês") %>%
+  add_boxplot(data=mid_py_data, y=~users, name="Contribuições no meio do mês") %>%
+  add_boxplot(data=end_py_data, y=~users, name="Contribuições no fim do mês") %>%
+  layout(yaxis = list(title = "Contribuição de usuários"))
+```
+
+Aparentemente sim, o comportamento se repete e as diferenças entre as contribuições ocorridas não são significativas. Vamos confirmar usando o *bootstrap*.
+
+```{r}
+# Beggining of the month VS. Middle of the month Bootstraping Data.
+
+median_bvsm_py <- bootstrap2(data=beg_py_data$users, data2=mid_py_data$users, median,
+                         R = 15000)
+
+medians_diff_bvsm_py <- CI.percentile(median_bvsm_py, probs = c(.025, .975))
+
+data.frame(medians_diff_bvsm_py) %>% 
+  ggplot() + 
+  geom_errorbar(aes(x = "Intervalo de confiança da diferença entre as medianas", ymin = X2.5., ymax = X97.5.), width = .2) + 
+  geom_hline(yintercept = 0, colour = "red")
+
+# Beggining of the month VS. End of the month Bootstraping Data.
+
+median_bvse_py <- bootstrap2(data=beg_py_data$users, data2=end_py_data$users, median,
+                         R = 15000)
+
+medians_diff_bvse_py <- CI.percentile(median_bvse_py, probs = c(.025, .975))
+
+data.frame(medians_diff_bvse_py) %>% 
+  ggplot() + 
+  geom_errorbar(aes(x = "Intervalo de confiança da diferença entre as medianas", ymin = X2.5., ymax = X97.5.), width = .2) + 
+  geom_hline(yintercept = 0, colour = "red")
+
+# Middle of the month VS. End of the month Bootstraping Data.
+
+median_mvse_py <- bootstrap2(data=mid_py_data$users, data2=end_py_data$users, median,
+                         R = 15000)
+
+medians_diff_mvse_py <- CI.percentile(median_mvse_py, probs = c(.025, .975))
+
+data.frame(medians_diff_mvse) %>% 
+  ggplot() + 
+  geom_errorbar(aes(x = "Intervalo de confiança da diferença entre as medianas", ymin = X2.5., ymax = X97.5.), width = .2) + 
+  geom_hline(yintercept = 0, colour = "red")
+```
+
+Como podemos perceber, não existe diferença significativa entre as contribuições ocorridas no início, meio e fim de mês para Python também. 
+
+Essa foi a análise dessa semana, espero que tenham gostado. Ate a próxima!
