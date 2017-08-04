@@ -1,0 +1,49 @@
+---
+title: "Testes de hipóteses VS. Intervalo de confiança"
+author: "Paulo Vinicius Soares"
+date: "4 de agosto de 2017"
+output: 
+  html_document:
+        toc: true
+        toc_float: true
+        toc_depth: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Introdução
+
+Olá! Este texto é uma continuação das análises referentes à disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG). Nesse *post* iremos formular duas perguntas sobre o repositório do Github e derivar mais duas perguntas a partir destas. Vamos lá?
+
+Agora vamos aos *imports* de biblioteca e dos nossos dados.
+
+```{r}
+# Library Imports
+library(tidyverse)
+library(plotly)
+library(resample)
+```
+
+```{r}
+# database imports
+programming_languages_data <- read.csv("https://raw.githubusercontent.com/nazareno/fpcc2/master/datasets/github-users-committing-filetypes.csv")
+```
+
+# Terceira pergunta: Qual o período do mês onde há maior contribuição, geralmente, para uma linguagem? Seria no início, no meio ou no fim do mês?
+
+```{r}
+beginning_month <- programming_languages_data %>% filter(month_day >= 1 & month_day <= 10)
+middle_month <- programming_languages_data %>% filter(month_day > 10 & month_day <= 20)
+end_month <- programming_languages_data %>% filter(month_day > 20)
+```
+
+```{r}
+#permutationTest2(data=beginning_month, statistic=median(users), data2=middle_month)
+permutationTest2(data=beginning_month, statistic=median(users), data2=end_month)
+permutation <- permutationTest2(data=middle_month, statistic=median(users), data2=end_month)
+
+hist(permutation)
+```
+como p-valor é maior que o grau de confiança, então não podemos rejeitar hipótese nula. nesse sentido,  é provável que a diferença entre os período do mes não seja alta/significativa(?).
