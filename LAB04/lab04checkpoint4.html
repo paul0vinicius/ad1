@@ -227,7 +227,6 @@ div.tocify {
 <p>Agora vamos aos <em>imports</em> de biblioteca e dos nossos dados.</p>
 <pre class="r"><code># Library Imports
 library(tidyverse)
-library(plotly)
 library(resample)</code></pre>
 <pre class="r"><code># database imports
 programming_languages_data &lt;- read.csv(&quot;https://raw.githubusercontent.com/nazareno/fpcc2/master/datasets/github-users-committing-filetypes.csv&quot;)</code></pre>
@@ -248,7 +247,7 @@ end_month &lt;- programming_languages_data %&gt;% filter(month_day &gt; 20)</cod
 - H1: <strong>Existe diferença entre as contribuições ocorridas em determinados períodos do mês.</strong></p>
 <p>O teste que iremos aplicar se chama <strong>teste de permutação</strong>, que simula o universo paralelo onde os resultados da amostra são randômicos. Em seguida, esse teste compara a minha amostra com essa amostra randômica do universo paralelo. Na análise utilizando intervalos de confiança, o intervalo se encontrava interceptando o 0, de forma que não podíamos afirmar que existia diferença significativa nas contribuições ocorridas entre diferentes períodos do mês. Isso ocorreu em todas as comparações dois-a-dois: início/fim, início/meio e meio/fim. Vamos ver qual o p-valor resultante para essas comparações.</p>
 <p>Comparando as medianas das contribuições ocorridas no início do mês e no meio do mês, temos:</p>
-<pre class="r"><code># Comparison between beginning and middle
+<pre class="r"><code># Comparison between beginning and middle of the month
 permutationTest2(data=beginning_month, statistic=median(users), data2=middle_month)</code></pre>
 <pre><code>## Call:
 ## permutationTest2(data = beginning_month, statistic = median(users), 
@@ -257,13 +256,14 @@ permutationTest2(data=beginning_month, statistic=median(users), data2=middle_mon
 ## Two samples, sample sizes are 4660 4571
 ## 
 ## Summary Statistics for the difference between samples 1 and 2:
-##                                             Observed     Mean Alternative
-## median(users): beginning_month-middle_month     -8.5 0.320432   two.sided
-##                                             PValue
-## median(users): beginning_month-middle_month 0.8092</code></pre>
-<p>O p-valor deu muito alto para esse caso, aproximadamente 80%, quando para haver uma diferença significativa, ou relevante, o p-valor deve ser menor que 5%. Ou seja, a probabilidade de aparecer resultados da minha amostra naquela amostra gerada no universo paralelo é de 80%, o que indica alta probabilidade da minha amostra não ter relevância nenhuma, ser apenas um amontoado de números.</p>
+##                                             Observed       Mean
+## median(users): beginning_month-middle_month     -8.5 -0.1958196
+##                                             Alternative PValue
+## median(users): beginning_month-middle_month   two.sided 0.8282</code></pre>
+<p>O p-valor deu muito alto para esse caso, aproximadamente 80%, quando para haver uma diferença significativa, ou relevante, o p-valor deve ser menor que 5%. Ou seja, a probabilidade de aparecer resultados da minha amostra naquela amostra gerada no universo paralelo é de 80%, o que indica alta probabilidade da minha amostra não ter relevância nenhuma.</p>
 <p>Comparando as medianas das contribuições ocorridas no início do mês e no fim do mês, temos:</p>
-<pre class="r"><code>permutationTest2(data=beginning_month, statistic=median(users), data2=end_month)</code></pre>
+<pre class="r"><code># Comparison between beginning and end of the month
+permutationTest2(data=beginning_month, statistic=median(users), data2=end_month)</code></pre>
 <pre><code>## Call:
 ## permutationTest2(data = beginning_month, statistic = median(users), 
 ##     data2 = end_month)
@@ -271,13 +271,14 @@ permutationTest2(data=beginning_month, statistic=median(users), data2=middle_mon
 ## Two samples, sample sizes are 4660 4571
 ## 
 ## Summary Statistics for the difference between samples 1 and 2:
-##                                          Observed       Mean Alternative
-## median(users): beginning_month-end_month      3.5 0.08280828   two.sided
+##                                          Observed      Mean Alternative
+## median(users): beginning_month-end_month      3.5 0.4389439   two.sided
 ##                                          PValue
-## median(users): beginning_month-end_month 0.9022</code></pre>
-<p>Aqui também percebemos um valor de quase 90% para o p-valor.</p>
+## median(users): beginning_month-end_month 0.9264</code></pre>
+<p>Aqui percebemos um valor de quase 90% para o p-valor, muito alto.</p>
 <p>Comparando as medianas das contribuições ocorridas no meio do mês e no fim do mês, temos:</p>
-<pre class="r"><code>permutationTest2(data=middle_month, statistic=median(users), data2=end_month)</code></pre>
+<pre class="r"><code># Comparison between middle and end of the month
+permutationTest2(data=middle_month, statistic=median(users), data2=end_month)</code></pre>
 <pre><code>## Call:
 ## permutationTest2(data = middle_month, statistic = median(users), 
 ##     data2 = end_month)
@@ -285,10 +286,10 @@ permutationTest2(data=beginning_month, statistic=median(users), data2=middle_mon
 ## Two samples, sample sizes are 4571 4571
 ## 
 ## Summary Statistics for the difference between samples 1 and 2:
-##                                       Observed       Mean Alternative
-## median(users): middle_month-end_month       12 0.05440544   two.sided
+##                                       Observed        Mean Alternative
+## median(users): middle_month-end_month       12 -0.04860486   two.sided
 ##                                       PValue
-## median(users): middle_month-end_month 0.7784</code></pre>
+## median(users): middle_month-end_month 0.7796</code></pre>
 <p>De forma semelhante ocorre nessa comparação.</p>
 <p>Chegamos à seguinte conclusão: Como o p-valor é maior do que o nível de significância referência (5%), não podemos rejeitar a hipótese nula. Então, existe uma alta probabilidade que as diferenças entre as contribuições ocorridas em determinados períodos do mês não seja significativa. Esse resultado concorda com o teste do intervalo de confiança, pois ambos afirmam a <strong>não relevância dessa diferença</strong>.</p>
 <p>Espero que tenham gostado dessa análise e até a próxima.</p>

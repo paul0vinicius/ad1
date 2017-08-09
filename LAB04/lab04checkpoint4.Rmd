@@ -22,7 +22,6 @@ Agora vamos aos *imports* de biblioteca e dos nossos dados.
 ```{r}
 # Library Imports
 library(tidyverse)
-library(plotly)
 library(resample)
 ```
 
@@ -57,21 +56,23 @@ Na análise utilizando intervalos de confiança, o intervalo se encontrava inter
 
 Comparando as medianas das contribuições ocorridas no início do mês e no meio do mês, temos:
 ```{r}
-# Comparison between beginning and middle
+# Comparison between beginning and middle of the month
 permutationTest2(data=beginning_month, statistic=median(users), data2=middle_month)
 ```
 
-O p-valor deu muito alto para esse caso, aproximadamente 80%, quando para haver uma diferença significativa, ou relevante, o p-valor deve ser menor que 5%. Ou seja, a probabilidade de aparecer resultados da minha amostra naquela amostra gerada no universo paralelo é de 80%, o que indica alta probabilidade da minha amostra não ter relevância nenhuma, ser apenas um amontoado de números.
+O p-valor deu muito alto para esse caso, aproximadamente 80%, quando para haver uma diferença significativa, ou relevante, o p-valor deve ser menor que 5%. Ou seja, a probabilidade de aparecer resultados da minha amostra naquela amostra gerada no universo paralelo é de 80%, o que indica alta probabilidade da minha amostra não ter relevância nenhuma.
 
 Comparando as medianas das contribuições ocorridas no início do mês e no fim do mês, temos:
 ```{r}
+# Comparison between beginning and end of the month
 permutationTest2(data=beginning_month, statistic=median(users), data2=end_month)
 ```
 
-Aqui também percebemos um valor de quase 90% para o p-valor.
+Aqui percebemos um valor de quase 90% para o p-valor, muito alto.
 
 Comparando as medianas das contribuições ocorridas no meio do mês e no fim do mês, temos:
 ```{r}
+# Comparison between middle and end of the month
 permutationTest2(data=middle_month, statistic=median(users), data2=end_month)
 ```
 
