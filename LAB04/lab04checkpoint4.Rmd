@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 # Introdução
 
-Olá! Este texto é uma continuação das análises referentes à disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG). Nesse *post* iremos formular duas perguntas sobre o repositório do Github e derivar mais duas perguntas a partir destas. Vamos lá?
+Olá! Este texto é uma continuação das análises referentes à disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG). Nesse *post* iremos recuperar uma análise feita de outro *post*, o da semana passada, e utilizar outro método para verificar a significância dos resultados: O teste de hipótese.
 
 Agora vamos aos *imports* de biblioteca e dos nossos dados.
 
@@ -31,19 +31,52 @@ library(resample)
 programming_languages_data <- read.csv("https://raw.githubusercontent.com/nazareno/fpcc2/master/datasets/github-users-committing-filetypes.csv")
 ```
 
-# Terceira pergunta: Qual o período do mês onde há maior contribuição, geralmente, para uma linguagem? Seria no início, no meio ou no fim do mês?
+# Entendendo a hipótese nula e o P-valor
 
+Ao fazer um *teste de hipótese* são definidas duas hipóteses: a hipótese nula e a hipótese alternativa. Estatísticamente falando, a hipótese alternativa é a hipótese formulada pelo pesquisador e a hipótese nula é o seu complemento. Sempre se considera a hipótese nula verdadeira, de forma que o proposto pelo pesquisador será comprovado através da análise do p-valor. Devemos atentar ao fato de que o p-valor não é um "martelo batido" definindo a hipótese do pesquisador como verdade absoluta. É apenas um indicador de que a hipótese proposta por ele tem ou não relevância para investigação. Então, deve ser usada com bastante cuidado.
+A definição estatística de p-valor é a probabilidade de se obter uma estatística de teste igual ou mais extrema que aquela observada em uma amostra, sob a hipótese nula. Ou seja, para um p-valor muito baixo, a probabilidade de obter um valor da estatística de teste como o observado é muito improvável. Outra forma de pensar isso é: Em um universo onde eu tenho uma amostra totalmente aleatória, qual a probabilidade de eu observar os resultados da minha amostra nessa amostra aleatória originada nesse universo? Essa probabilidade é o p-valor.
+
+# Pergunta analisada: Qual o período do mês onde há maior contribuição, geralmente, para uma linguagem? Seria no início, no meio ou no fim do mês?
+
+Vamos filtrar novamente os períodos do mês, dividindo-os em três partes: início, meio e fim. Outra forma de pensar essa pergunta é: **Existe diferença significativa nas contribuições ocorridas em determinados períodos do mês?**
+  
 ```{r}
 beginning_month <- programming_languages_data %>% filter(month_day >= 1 & month_day <= 10)
 middle_month <- programming_languages_data %>% filter(month_day > 10 & month_day <= 20)
 end_month <- programming_languages_data %>% filter(month_day > 20)
 ```
 
-```{r}
-#permutationTest2(data=beginning_month, statistic=median(users), data2=middle_month)
-permutationTest2(data=beginning_month, statistic=median(users), data2=end_month)
-permutation <- permutationTest2(data=middle_month, statistic=median(users), data2=end_month)
+O que iremos fazer é uma comparação dois a dois de cada período e verificar se realmente há diferença. Seguindo o raciocínio aplicado na primeira seção, definimos a nossa hipótese alternativa como: **Existe diferença entre as contribuições ocorridas em determinados períodos do mês**; dessa forma, nossa hipótese nula será seu complemento: **Não existe diferença entre as contribuições ocorridas em determinados períodos do mês**.  
 
-hist(permutation)
+Também podemos escrever dessa forma:  
+  - H0: **Não existe diferença entre as contribuições ocorridas em determinados períodos do mês.**  
+  - H1: **Existe diferença entre as contribuições ocorridas em determinados períodos do mês.**  
+
+O teste que iremos aplicar se chama **teste de permutação**, que simula o universo paralelo onde os resultados da amostra são randômicos. Em seguida, esse teste compara a minha amostra com essa amostra randômica do universo paralelo.
+Na análise utilizando intervalos de confiança, o intervalo se encontrava interceptando o 0, de forma que não podíamos afirmar que existia diferença significativa nas contribuições ocorridas entre diferentes períodos do mês. Isso ocorreu em todas as comparações dois-a-dois: início/fim, início/meio e meio/fim. Vamos ver qual o p-valor resultante para essas comparações.  
+
+Comparando as medianas das contribuições ocorridas no início do mês e no meio do mês, temos:
+```{r}
+# Comparison between beginning and middle
+permutationTest2(data=beginning_month, statistic=median(users), data2=middle_month)
 ```
-como p-valor é maior que o grau de confiança, então não podemos rejeitar hipótese nula. nesse sentido,  é provável que a diferença entre os período do mes não seja alta/significativa(?).
+
+O p-valor deu muito alto para esse caso, aproximadamente 80%, quando para haver uma diferença significativa, ou relevante, o p-valor deve ser menor que 5%. Ou seja, a probabilidade de aparecer resultados da minha amostra naquela amostra gerada no universo paralelo é de 80%, o que indica alta probabilidade da minha amostra não ter relevância nenhuma, ser apenas um amontoado de números.
+
+Comparando as medianas das contribuições ocorridas no início do mês e no fim do mês, temos:
+```{r}
+permutationTest2(data=beginning_month, statistic=median(users), data2=end_month)
+```
+
+Aqui também percebemos um valor de quase 90% para o p-valor.
+
+Comparando as medianas das contribuições ocorridas no meio do mês e no fim do mês, temos:
+```{r}
+permutationTest2(data=middle_month, statistic=median(users), data2=end_month)
+```
+
+De forma semelhante ocorre nessa comparação.
+
+Chegamos à seguinte conclusão: Como o p-valor é maior do que o nível de significância referência (5%), não podemos rejeitar a hipótese nula. Então, existe uma alta probabilidade que as diferenças entre as contribuições ocorridas em determinados períodos do mês não seja significativa. Esse resultado concorda com o teste do intervalo de confiança, pois ambos afirmam a **não relevância dessa diferença**.  
+
+Espero que tenham gostado dessa análise e até a próxima.
