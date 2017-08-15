@@ -1,0 +1,58 @@
+---
+title: "Dados sobre o speed dating"
+author: "Paulo Vinicius Soares"
+date: "15 de agosto de 2017"
+output: 
+  html_document:
+        toc: true
+        toc_float: true
+        toc_depth: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introdução
+
+Olá! Este texto é uma continuação das análises referentes à disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG). Nesse *post* iremos analisar dados sobre o speed dating.
+
+Agora vamos aos *imports* de biblioteca e dos nossos dados.
+
+```{r}
+# Library Imports
+library(tidyverse)
+library(resample)
+```
+
+```{r}
+# database imports
+speed_dating_data <- read.csv("https://raw.githubusercontent.com/nazareno/ciencia-de-dados-1/master/5-regressao/speed-dating/speed-dating.csv")
+
+matches_data <- read.csv("https://raw.githubusercontent.com/nazareno/ciencia-de-dados-1/master/5-regressao/speed-dating/speed-dating2.csv")
+```
+
+```{r}
+
+# Relação entre o quanto a pessoa achou o parceiro bonito e likes.
+mod_fun <- lm(fun ~ like, data = speed_dating_data)
+mod_attr <- lm(attr ~ like, data = speed_dating_data)
+speed_dating_data %>%
+add_predictions(model = mod_attr) %>% # add o que o modelo estima p cada hs_grad
+  ggplot(mapping = aes(x = like, y = attr)) + 
+  geom_point(alpha = 0.4, size = .5) + 
+  geom_line(aes(y = pred), colour = "red")  + 
+  geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
+
+# Relação entre o quanto a pessoa achou o parceiro engraçado e likes.
+speed_dating_data %>%
+add_predictions(model = mod_fun) %>% # add o que o modelo estima p cada hs_grad
+  ggplot(mapping = aes(x = like, y = fun)) + 
+  geom_point(alpha = 0.4, size = .5) + 
+  geom_line(aes(y = pred), colour = "red")  + 
+  geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
+
+```
+
+
+
