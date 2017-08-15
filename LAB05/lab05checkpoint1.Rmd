@@ -35,19 +35,35 @@ matches_data <- read.csv("https://raw.githubusercontent.com/nazareno/ciencia-de-
 ```{r}
 
 # Relação entre o quanto a pessoa achou o parceiro bonito e likes.
-mod_fun <- lm(fun ~ like, data = speed_dating_data)
-mod_attr <- lm(attr ~ like, data = speed_dating_data)
+mod_fun <- lm(like ~ fun, data = speed_dating_data)
+
+tidy(mod_fun)
+
 speed_dating_data %>%
-add_predictions(model = mod_attr) %>% # add o que o modelo estima p cada hs_grad
-  ggplot(mapping = aes(x = like, y = attr)) + 
+add_predictions(model = mod_fun) %>% # add o que o modelo estima p cada hs_grad
+  ggplot(mapping = aes(x = fun, y = like)) + 
   geom_point(alpha = 0.4, size = .5) + 
   geom_line(aes(y = pred), colour = "red")  + 
   geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
 
+mod_attr <- lm(like ~ fun+attr, data = speed_dating_data)
+
+tidy(mod_attr, conf.int = TRUE)
+
+speed_dating_data %>%
+  ggplot(mapping = aes(x = fun, y = like)) + 
+  geom_count(alpha = 0.4) + 
+  geom_line(data= plotar, aes(y = pred, group=attr, color=attr))  + 
+  geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
+
+plotar <- speed_dating_data %>% 
+  data_grid(attr=seq_range(attr, 4), fun=seq_range(fun, 4)) %>%
+  add_predictions(model = mod_attr)
+
 # Relação entre o quanto a pessoa achou o parceiro engraçado e likes.
 speed_dating_data %>%
-add_predictions(model = mod_fun) %>% # add o que o modelo estima p cada hs_grad
-  ggplot(mapping = aes(x = like, y = fun)) + 
+add_predictions(model = mod_attr) %>% # add o que o modelo estima p cada hs_grad
+  ggplot(mapping = aes(x = fun, y = like)) + 
   geom_point(alpha = 0.4, size = .5) + 
   geom_line(aes(y = pred), colour = "red")  + 
   geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
