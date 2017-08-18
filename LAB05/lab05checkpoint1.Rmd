@@ -23,6 +23,10 @@ Agora vamos aos *imports* de biblioteca e dos nossos dados.
 # Library Imports
 library(tidyverse)
 library(resample)
+library(tidyr)
+library(modelr)
+library(broom)
+library(GGally)
 ```
 
 ```{r}
@@ -30,6 +34,11 @@ library(resample)
 speed_dating_data <- read.csv("https://raw.githubusercontent.com/nazareno/ciencia-de-dados-1/master/5-regressao/speed-dating/speed-dating.csv")
 
 matches_data <- read.csv("https://raw.githubusercontent.com/nazareno/ciencia-de-dados-1/master/5-regressao/speed-dating/speed-dating2.csv")
+
+men_data <- speed_dating_data %>% filter(gender==1)
+  
+women_data <- speed_dating_data %>% filter(gender==0)
+  
 ```
 
 ```{r}
@@ -48,7 +57,11 @@ add_predictions(model = mod_fun) %>% # add o que o modelo estima p cada hs_grad
 
 mod_attr <- lm(like ~ fun+attr, data = speed_dating_data)
 
-tidy(mod_attr, conf.int = TRUE)
+speed_dating_data %>% select(fun, attr, sinc, intel, amb, shar, like) %>% ggpairs()
+
+hist(speed_dating_data$age)
+
+  tidy(mod_attr, conf.int = TRUE)
 
 speed_dating_data %>%
   ggplot(mapping = aes(x = fun, y = like)) + 
