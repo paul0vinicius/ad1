@@ -10,16 +10,20 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 # Introdução
 
 Olá! Este texto é uma continuação das análises referentes à disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG). Nesse *post* iremos analisar dados sobre o speed dating.
 
+O *speed dating* é um babado onde você se encontra com uma pessoa por 4 minutos, preenche uma ficha e vê se fecha ou não. É o resumo da sociedade líquida onde as pessoas se encontram com outras cegamente e desesperadamente buscam um parceiro ou um momento de diversão. Tinder da vida real (Ou vai ver o Tinder surgiu inspirado nesse negócio, vai saber...).  
+
+Aí abaixo temos inúmeras variáveis, certamente um cabaré. Isso é uma coisa ótima porque dessa forma podemos formular várias perguntas e descobrir várias coisas sobre o comportamento humano (o que é uma coisa bizarra).
+
 Agora vamos aos *imports* de biblioteca e dos nossos dados.
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 # Library Imports
 library(tidyverse)
 library(resample)
@@ -33,53 +37,99 @@ library(GGally)
 # database imports
 speed_dating_data <- read.csv("https://raw.githubusercontent.com/nazareno/ciencia-de-dados-1/master/5-regressao/speed-dating/speed-dating.csv")
 
+# Same data, but contains the match info
 matches_data <- read.csv("https://raw.githubusercontent.com/nazareno/ciencia-de-dados-1/master/5-regressao/speed-dating/speed-dating2.csv")
 
+# Selecting the men, still don't know what for... Let's find out at some point.
 men_data <- speed_dating_data %>% filter(gender==1)
   
+# Same...
 women_data <- speed_dating_data %>% filter(gender==0)
   
+```
+
+# Primeira pergunta: O que será que mais chama a atenção de uma pessoa em um encontro?
+Nosso dado possui uma gama enorme de informações, mas vamos focar nas variáveis que queremos utilizar para responder à nossa pergunta. Essas variáveis quantificam qual a opinião da pessoa com relação ao seu parceiro considerando os seguintes aspectos: beleza, o quão engraçado ele achou o parceiro, sinceridade, inteligência e ambição (uau).  
+A ideia aqui é ver qual quesito influencia mais no resultado final, que seria uma variável chamada 'likes'. A ideia é que o quesito que possua maior **correlação** com likes apresente maior influência na nota de likes, nos permitindo concluir que tal quesito é o que mais chama a atenção de uma pessoa no encontro.  
+Vamos utilizar uma biblioteca chamada *GGally* que nos permite visualizar a correlação de cada uma das variáveis entre si e com like, nos dando uma ideia do comportamento destas.
+
+```{r}
+speed_dating_data %>% select(fun, attr, sinc, intel, amb, like) %>% ggpairs()
+```
+
+Podemos perceber pelo gráfico acima que todas as variáveis, se analisadas individualmente, possuem uma correlação considerada moderada com a variável like - Entre 50% e 70% - o que as agrupa, de certa forma, em um mesmo patamar se generalizássemos. Mas, como estamos querendo saber qual a que possui maior influência iremos considerar a variável com maior correlação: fun, que quantifica o quão engraçado/divertido o parceiro achou o seu par.  
+Se fizermos um modelo de regressão linear para ver a influência das variáveis na variável like, teremos:
+
+```{r}
+mod_all_variables <- lm(like ~ fun+attr+sinc+intel+amb, data = speed_dating_data)
+tidy(mod_all_variables, conf.int = TRUE)
+```
+
+Vemos que ser ambicioso não influencia no resultado final, de acordo com esta estimativa, sendo esta a variável com menor correlação, além de apresentar um p-valor > 0.5 e intervalos de confiança que incluem o 0.
+Podemos perceber que o modelo estimou para a variável *attr* uma maior influência sobre a variável de saída like, de forma que ela está com um valor muito parecido com o de *fun*. Nesse caso, podemos fazer uma regressão utilizando essas duas variáveis.
+
+(Agora eu não tenho certeza se posso fazer isso, tipo, desconsiderar as outras variáveis e analisar só essas duas... Eu acho que não posso fazer isso :/ enfim, depois eu pergunto a ele)
+
+```{r}
+mod_fun_attr <- lm(like ~ fun+attr, data = speed_dating_data)
+tidy(mod_fun_attr, conf.int = TRUE)
+```
+
+Agora que vimos esses negócios de novo, vamos ver o resultado no gráfico considerando as duas variáveis bla bla bla
+```{r}
+# Esse babado aqui é pra gerar um intervalo de valores que eu quero plotar, só pra orientar
+# na leitura do gráfico
+p <- speed_dating_data %>% 
+  data_grid(attr=seq_range(attr, 4), fun=seq_range(fun, 4)) %>%
+  add_predictions(model = mod_fun_attr)
+
+speed_dating_data %>%
+  ggplot(mapping = aes(x = fun, y = like)) + 
+  geom_count(alpha = 0.4) + 
+  geom_line(data= p, aes(y = pred, group=attr, color=attr))  + 
+  geom_abline(intercept = 69, slope = -.65, color  = "darkblue")
 ```
 
 ```{r}
 
 # Relação entre o quanto a pessoa achou o parceiro bonito e likes.
-mod_fun <- lm(like ~ fun, data = speed_dating_data)
-
-tidy(mod_fun)
-
-speed_dating_data %>%
-add_predictions(model = mod_fun) %>% # add o que o modelo estima p cada hs_grad
-  ggplot(mapping = aes(x = fun, y = like)) + 
-  geom_point(alpha = 0.4, size = .5) + 
-  geom_line(aes(y = pred), colour = "red")  + 
-  geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
-
-mod_attr <- lm(like ~ fun+attr, data = speed_dating_data)
-
-speed_dating_data %>% select(fun, attr, sinc, intel, amb, shar, like) %>% ggpairs()
-
-hist(speed_dating_data$age)
-
-  tidy(mod_attr, conf.int = TRUE)
-
-speed_dating_data %>%
-  ggplot(mapping = aes(x = fun, y = like)) + 
-  geom_count(alpha = 0.4) + 
-  geom_line(data= plotar, aes(y = pred, group=attr, color=attr))  + 
-  geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
-
-plotar <- speed_dating_data %>% 
-  data_grid(attr=seq_range(attr, 4), fun=seq_range(fun, 4)) %>%
-  add_predictions(model = mod_attr)
-
-# Relação entre o quanto a pessoa achou o parceiro engraçado e likes.
-speed_dating_data %>%
-add_predictions(model = mod_attr) %>% # add o que o modelo estima p cada hs_grad
-  ggplot(mapping = aes(x = fun, y = like)) + 
-  geom_point(alpha = 0.4, size = .5) + 
-  geom_line(aes(y = pred), colour = "red")  + 
-  geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
+# Create linear regression model between like and fun,
+# mod_fun <- lm(like ~ fun, data = speed_dating_data)
+# 
+# tidy(mod_fun)
+# 
+# speed_dating_data %>%
+# add_predictions(model = mod_fun) %>% # add o que o modelo estima p cada hs_grad
+#   ggplot(mapping = aes(x = fun, y = like)) + 
+#   geom_point(alpha = 0.4, size = .5) + 
+#   geom_line(aes(y = pred), colour = "red")  + 
+#   geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
+# 
+# mod_fun_attr <- lm(like ~ fun+attr, data = speed_dating_data)
+# 
+# speed_dating_data %>% select(fun, attr, sinc, intel, amb, shar, like) %>% ggpairs()
+# 
+# hist(speed_dating_data$age)
+# 
+#   tidy(mod_attr, conf.int = TRUE)
+# 
+# speed_dating_data %>%
+#   ggplot(mapping = aes(x = fun, y = like)) + 
+#   geom_count(alpha = 0.4) + 
+#   geom_line(data= plotar, aes(y = pred, group=attr, color=attr))  + 
+#   geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
+# 
+# plotar <- speed_dating_data %>% 
+#   data_grid(attr=seq_range(attr, 4), fun=seq_range(fun, 4)) %>%
+#   add_predictions(model = mod_attr)
+# 
+# # Relação entre o quanto a pessoa achou o parceiro engraçado e likes.
+# speed_dating_data %>%
+# add_predictions(model = mod_attr) %>% # add o que o modelo estima p cada hs_grad
+#   ggplot(mapping = aes(x = fun, y = like)) + 
+#   geom_point(alpha = 0.4, size = .5) + 
+#   geom_line(aes(y = pred), colour = "red")  + 
+#   geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
 
 ```
 
