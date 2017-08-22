@@ -37,6 +37,8 @@ library(GGally)
 # database imports
 speed_dating_data <- read.csv("https://raw.githubusercontent.com/nazareno/ciencia-de-dados-1/master/5-regressao/speed-dating/speed-dating.csv")
 
+toString(speed_dating_data[,2])
+
 # Same data, but contains the match info
 matches_data <- read.csv("https://raw.githubusercontent.com/nazareno/ciencia-de-dados-1/master/5-regressao/speed-dating/speed-dating2.csv")
 
@@ -89,6 +91,18 @@ speed_dating_data %>%
   geom_line(data= p, aes(y = pred, group=attr, color=attr))  + 
   geom_abline(intercept = 69, slope = -.65, color  = "darkblue")
 ```
+
+# Segunda pergunta: Em geral, qual gênero é mais confiante com relação a um segundo encontro?
+
+# Correlograma
+
+# Prob ~ isFemale (isMale) + attr (Depois de verificar quem é mais confiante, adicionar o bicho da beleza porque facilita comparar separadamente e depois jogar mais variáveis)
+
+```{r}
+mod_confianca_men <- lm(prob ~ gender+attr, data = speed_dating_data)
+tidy(mod_confianca_men, conf.int = TRUE)
+```
+
 
 ```{r}
 
