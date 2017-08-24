@@ -31,6 +31,7 @@ library(tidyr)
 library(modelr)
 library(broom)
 library(GGally)
+library(corrgram)
 ```
 
 ```{r}
@@ -56,7 +57,7 @@ A ideia aqui é ver qual quesito influencia mais no resultado final, que seria u
 Vamos utilizar uma biblioteca chamada *GGally* que nos permite visualizar a correlação de cada uma das variáveis entre si e com like, nos dando uma ideia do comportamento destas.
 
 ```{r}
-speed_dating_data %>% select(fun, attr, sinc, intel, amb, like) %>% ggpairs()
+w <- speed_dating_data %>% select(fun, attr, sinc, intel, amb, like) %>% ggpairs()
 ```
 
 Podemos perceber pelo gráfico acima que todas as variáveis, se analisadas individualmente, possuem uma correlação considerada moderada com a variável like - Entre 50% e 70% - o que as agrupa, de certa forma, em um mesmo patamar se generalizássemos. Mas, como estamos querendo saber qual a que possui maior influência iremos considerar a variável com maior correlação: fun, que quantifica o quão engraçado/divertido o parceiro achou o seu par.  
@@ -65,6 +66,8 @@ Se fizermos um modelo de regressão linear para ver a influência das variáveis
 ```{r}
 mod_all_variables <- lm(like ~ fun+attr+sinc+intel+amb, data = speed_dating_data)
 tidy(mod_all_variables, conf.int = TRUE)
+
+speed_dating_data %>% select(fun, attr, sinc, intel, amb, like) %>% corrgram()
 ```
 
 Vemos que ser ambicioso não influencia no resultado final, de acordo com esta estimativa, sendo esta a variável com menor correlação, além de apresentar um p-valor > 0.5 e intervalos de confiança que incluem o 0.
