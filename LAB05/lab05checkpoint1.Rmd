@@ -15,11 +15,11 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 # Introdução
 
-Olá! Este texto é uma continuação das análises referentes à disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG). Nesse *post* iremos analisar dados sobre o speed dating.
+Olá! Este texto é uma continuação das análises referentes à disciplina de Análise de Dados I, na Universidade Federal de Campina Grande (UFCG). Nesse *post* iremos analisar dados sobre o *speed dating*.
 
-O *speed dating* é um babado onde você se encontra com uma pessoa por 4 minutos, preenche uma ficha e vê se fecha ou não. É o resumo da sociedade líquida onde as pessoas se encontram com outras cegamente e desesperadamente buscam um parceiro ou um momento de diversão. Tinder da vida real (Ou vai ver o Tinder surgiu inspirado nesse negócio, vai saber...).  
+O *speed dating* é um modelo de encontro cujo funcionamento se baseia em encontro rápidos de 4 minutos. Ao terminar o encontro, o participante preenche uma ficha relatando suas impressões do parceiro. É algo muito similar ao Tinder, porém os encontros e os *likes* acontecem pessoalmente. 
 
-Aí abaixo temos inúmeras variáveis, certamente um cabaré. Isso é uma coisa ótima porque dessa forma podemos formular várias perguntas e descobrir várias coisas sobre o comportamento humano (o que é uma coisa bizarra).
+Abaixo temos inúmeras variáveis, mas vamos nos ater à **percepção que a pessoa tem do parceiro**, ou seja, suas qualidades - de forma mais direta.
 
 Agora vamos aos *imports* de biblioteca e dos nossos dados.
 
@@ -34,53 +34,95 @@ library(GGally)
 library(corrgram)
 ```
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 # database imports
 speed_dating_data <- read.csv("https://raw.githubusercontent.com/nazareno/ciencia-de-dados-1/master/5-regressao/speed-dating/speed-dating.csv")
 
-toString(speed_dating_data[,2])
-
 # Same data, but contains the match info
 matches_data <- read.csv("https://raw.githubusercontent.com/nazareno/ciencia-de-dados-1/master/5-regressao/speed-dating/speed-dating2.csv")
-
-# Selecting the men, still don't know what for... Let's find out at some point.
-men_data <- speed_dating_data %>% filter(gender==1)
-  
-# Same...
-women_data <- speed_dating_data %>% filter(gender==0)
-  
 ```
 
-# Primeira pergunta: O que será que mais chama a atenção de uma pessoa em um encontro?
-Nosso dado possui uma gama enorme de informações, mas vamos focar nas variáveis que queremos utilizar para responder à nossa pergunta. Essas variáveis quantificam qual a opinião da pessoa com relação ao seu parceiro considerando os seguintes aspectos: beleza, o quão engraçado ele achou o parceiro, sinceridade, inteligência e ambição (uau).  
-A ideia aqui é ver qual quesito influencia mais no resultado final, que seria uma variável chamada 'likes'. A ideia é que o quesito que possua maior **correlação** com likes apresente maior influência na nota de likes, nos permitindo concluir que tal quesito é o que mais chama a atenção de uma pessoa no encontro.  
-Vamos utilizar uma biblioteca chamada *GGally* que nos permite visualizar a correlação de cada uma das variáveis entre si e com like, nos dando uma ideia do comportamento destas.
+```{r, warning = FALSE, message = FALSE, echo=FALSE}
+speed_dating_data[,2] <- as.character(speed_dating_data[,2])
+```
 
+
+As variáveis escolhidas são:  
+  - attr: quão atraente p1 achou p2  
+  
+  - sinc: quão sincero p1 achou p2  
+  
+  - intel: quão inteligente p1 achou p2  
+  
+  - fun: quão divertido p1 achou p2  
+  
+  - amb: quão ambicioso p1 achou p2  
+  
+  - prob: que probabilidade p1 acha que p2 tem de querer se encontrar novamente com p- (escala 1-10)  
+  
+  
+Vamos às nossas perguntas!
+
+# Primeira pergunta: O que será que mais chama a atenção de uma pessoa em um encontro, o quão bonita ela é ou o quão divertida ela é?
+Nosso dado possui uma gama enorme de informações, mas vamos focar nas variáveis que queremos utilizar para responder à nossa pergunta. Essas variáveis quantificam a opinião da pessoa com relação ao seu parceiro considerando os seguintes aspectos: beleza, o quão engraçado ele achou o parceiro, sinceridade, inteligência e ambição (uau).  
+A ideia aqui é ver qual quesito influencia mais no resultado final, que seria a variável chamada *likes*. A ideia é que o quesito que possua maior **correlação** com likes apresente maior influência na nota de likes, nos permitindo concluir que tal quesito é o que mais chama a atenção de uma pessoa no encontro.  
+Vamos utilizar uma biblioteca chamada *GGally* que nos permite visualizar a correlação de cada uma das variáveis entre si e com like, nos dando uma ideia do comportamento destas. Vamos selecionar *fun* e *attr* que são as duas variáveis que nos interessam para esse caso.
+
+## Análise das correlações entre as variáveis e dispersão usando ggpairs
 ```{r}
-w <- speed_dating_data %>% select(fun, attr, sinc, intel, amb, like) %>% ggpairs()
+speed_dating_data %>% select(fun, attr, like) %>% ggpairs()
+# speed_dating_data %>% select(fun, attr, like) %>% corrgram()
 ```
 
-Podemos perceber pelo gráfico acima que todas as variáveis, se analisadas individualmente, possuem uma correlação considerada moderada com a variável like - Entre 50% e 70% - o que as agrupa, de certa forma, em um mesmo patamar se generalizássemos. Mas, como estamos querendo saber qual a que possui maior influência iremos considerar a variável com maior correlação: fun, que quantifica o quão engraçado/divertido o parceiro achou o seu par.  
+Podemos perceber que existe uma correlação considerada moderada (Entre 50% e 70%) das variáveis *fun* e *attr* na variável de saída *like*, o que aponta uma forte evidência de que estas influenciem no resultado final de like.  
 Se fizermos um modelo de regressão linear para ver a influência das variáveis na variável like, teremos:
 
-```{r}
-mod_all_variables <- lm(like ~ fun+attr+sinc+intel+amb, data = speed_dating_data)
-tidy(mod_all_variables, conf.int = TRUE)
-
-speed_dating_data %>% select(fun, attr, sinc, intel, amb, like) %>% corrgram()
-```
-
-Vemos que ser ambicioso não influencia no resultado final, de acordo com esta estimativa, sendo esta a variável com menor correlação, além de apresentar um p-valor > 0.5 e intervalos de confiança que incluem o 0.
-Podemos perceber que o modelo estimou para a variável *attr* uma maior influência sobre a variável de saída like, de forma que ela está com um valor muito parecido com o de *fun*. Nesse caso, podemos fazer uma regressão utilizando essas duas variáveis.
-
-(Agora eu não tenho certeza se posso fazer isso, tipo, desconsiderar as outras variáveis e analisar só essas duas... Eu acho que não posso fazer isso :/ enfim, depois eu pergunto a ele)
-
+## Análise do modelo de regressão linear
 ```{r}
 mod_fun_attr <- lm(like ~ fun+attr, data = speed_dating_data)
 tidy(mod_fun_attr, conf.int = TRUE)
 ```
 
-Agora que vimos esses negócios de novo, vamos ver o resultado no gráfico considerando as duas variáveis bla bla bla
+Podemos perceber que o modelo estimou para a variável *fun* uma maior influência sobre a variável de saída like, de forma que ela está com um valor muito parecido com o de *attr*.
+
+Acima, podemos retirar informações significantes da tabela, tais quais:   
+  - *estimate*: significa o coeficiente da variável no modelo, ou seja, o quanto ela influencia na variável de saída.  
+  
+  - *p value*: Medida estatística que indica a significância da influência da variável no variável de saída.   
+  
+  - *conf low e conf high*: Os intervalos de confiança para as coeficientes das variáveis do modelo. Se esses interceptarem o 0, não podemos afirmar que existe significância na influência destes na variável de saída.   
+  
+Dado que o modelo que estamos analisando se baseia na fórmula ```like = (a x fun) + (b x attr)```, onde *a* é o coeficiente estimado no modelo para o quão divertido a pessoa achou o parceiro e *b* o quão bonito a pessoa achou o parceiro, podemos afirmar que:  
+
+  - O parceiro ser divertido aumenta em, aproximadamente, 0.42 pontos a nota de like.  
+  
+  - O parceiro ser bonito aumenta em, aproximandamente, 0.40 pontos a nota de like.  
+
+## Análise dos resíduos do modelo de regressão linear
+Vamos analisar os resíduos do nosso modelo para cada variável independente:  
+
+```{r}
+mod_fun_attr_residuos <- speed_dating_data %>% 
+  add_predictions(mod_fun_attr) %>%
+  add_residuals(mod_fun_attr)
+
+mod_fun_attr_residuos %>% ggplot(aes(x=attr)) +geom_jitter(aes(y=resid), alpha=.5)
+```
+
+Em geral, os resíduos se concentram entre -3 e 3, o que não é um número muito elevado.
+
+Para a variável fun, temos:
+
+```{r}
+mod_fun_attr_residuos %>% ggplot(aes(x=fun)) +geom_jitter(aes(y=resid), alpha=.5)
+```
+
+Para essa variável, aparentemente há um número de resíduos maior, variando entre -3 e 6 pontos em alguns casos. Porém a concentração dos dados se aproxima do resíduo em 0, mostrando que há poucos resíduos.
+
+## Visualização do modelo de regressão linear
+
+Se visualizarmos o modelo graficamente, teremos:  
+
 ```{r}
 # Esse babado aqui é pra gerar um intervalo de valores que eu quero plotar, só pra orientar
 # na leitura do gráfico
@@ -95,60 +137,64 @@ speed_dating_data %>%
   geom_abline(intercept = 69, slope = -.65, color  = "darkblue")
 ```
 
+O gráfico acima mostra como as duas variáveis se comportam e influenciam like. No eixo x temos o quão divertido a pessoa achou seu parceiro e no eixo y temos a nota de like, a variável de saída. Essas linhas horizontais que interceptam o gráfico são as notas do quão atraente uma pessoa achou seu parceiro. As quatro linhas variam de acordo com a faixa de cores. Na linha mais próxima a zero, a faixa de valores é entre 0 e 2.5, na linha acima varia de 2.5 a 5 e assim sucessivamente.  
+A variável like tem sua nota dada pelo cruzamento entre um ponto que intercepta eixo x e a linha horizontal *attr*.  
+*n* é o número de votos que foram dados com aquela nota, especificamente.
+
+## Análise do R²
+Já mencionamos a significância, relevância e magnitude dos coeficientes acima, além de demonstrar o comportamento do modelo graficamente. Agora vamos entender R², que é o quão bem o meu modelo consegue explicar os dados observados.
+
+```{r}
+glance(mod_fun_attr) %>% select(r.squared, adj.r.squared, sigma, statistic, p.value)
+```
+
+De acordo com o cálculo acima, usando a biblioteca *broom*, temos que o nosso modelo consegue explicar 58% da variação observada para a variável like.
+
 # Segunda pergunta: Em geral, qual gênero é mais confiante com relação a um segundo encontro?
 
-# Correlograma
+Podemos reformular essa pergunta para que ela seja respondida corretamente usando os conceitos de estatística e análise dos dados que dispomos. Desse modo, ela fica assim: "A probabilidade que a pessoa acha que o parceiro tem que de querer se encontrar com ela novamente é influenciada pelo gênero (da pessoa) e pelo quão bonito a pessoa achou o parceiro?". Confuso, certo? Mas imagine o seguinte: Existem mitos sobre a autoconfiança nos gêneros. Existem pessoas que dizem que os homens são mais autoconfiantes e outras que dizem que mulheres são mais autoconfiantes. A variável *prob* nos diz a probabilidade que p1 acha que p2 tem de querer se encontrar novamente com ele, certo? Então, teoricamente, quanto maior a nota, mais autoconfiança uma pessoa tem sobre o quão bem foi o seu encontro. Agora vamos verificar a variação disso em função do gênero e do quão bonito p1 achou p2. Quanto mais bonito, será que essa probabilidade diminui? Ou seja, a autoconfiança é influenciada pela beleza do parceiro?
 
-# Prob ~ isFemale (isMale) + attr (Depois de verificar quem é mais confiante, adicionar o bicho da beleza porque facilita comparar separadamente e depois jogar mais variáveis)
+Vamos ver!
 
+## Análise do modelo de regressão linear
 ```{r}
-mod_confianca_men <- lm(prob ~ gender+attr, data = speed_dating_data)
-tidy(mod_confianca_men, conf.int = TRUE)
+mod_confianca <- lm(prob ~ gender+attr, data = speed_dating_data)
+tidy(mod_confianca, conf.int = TRUE)
 ```
 
+De acordo com o modelo acima, os homens (gênero 1) são menos confiantes do que as mulheres nos encontros. Porém, ao analisarmos a significância percebemos que não podemos afirmar relevância significativa para as diferenças de gênero na confiança com relação a um segundo encontro. Isso, entretanto, se prende aos termos técnicos e gerais da estatística, pois ele fica na limiar entre haver diferença e não haver diferença. É algo a ser discutido e pesquisado com mais afinco.  
 
+Ao analisarmos a nossa segunda variável, a beleza do parceiro, vemos que há uma influência positiva desta na variável *prob*. Ou seja, quanto mais p1 acha p2 bonito, maior a probabilidade que p1 acha que p2 quer se encontrar com ele novamente.  
+
+## Análise dos resíduos do modelo de regressão linear
+
+Analisando a variável de beleza, temos:  
 ```{r}
+mod_conf_residuos <- speed_dating_data %>% 
+  add_predictions(mod_confianca) %>%
+  add_residuals(mod_confianca)
 
-# Relação entre o quanto a pessoa achou o parceiro bonito e likes.
-# Create linear regression model between like and fun,
-# mod_fun <- lm(like ~ fun, data = speed_dating_data)
-# 
-# tidy(mod_fun)
-# 
-# speed_dating_data %>%
-# add_predictions(model = mod_fun) %>% # add o que o modelo estima p cada hs_grad
-#   ggplot(mapping = aes(x = fun, y = like)) + 
-#   geom_point(alpha = 0.4, size = .5) + 
-#   geom_line(aes(y = pred), colour = "red")  + 
-#   geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
-# 
-# mod_fun_attr <- lm(like ~ fun+attr, data = speed_dating_data)
-# 
-# speed_dating_data %>% select(fun, attr, sinc, intel, amb, shar, like) %>% ggpairs()
-# 
-# hist(speed_dating_data$age)
-# 
-#   tidy(mod_attr, conf.int = TRUE)
-# 
-# speed_dating_data %>%
-#   ggplot(mapping = aes(x = fun, y = like)) + 
-#   geom_count(alpha = 0.4) + 
-#   geom_line(data= plotar, aes(y = pred, group=attr, color=attr))  + 
-#   geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
-# 
-# plotar <- speed_dating_data %>% 
-#   data_grid(attr=seq_range(attr, 4), fun=seq_range(fun, 4)) %>%
-#   add_predictions(model = mod_attr)
-# 
-# # Relação entre o quanto a pessoa achou o parceiro engraçado e likes.
-# speed_dating_data %>%
-# add_predictions(model = mod_attr) %>% # add o que o modelo estima p cada hs_grad
-#   ggplot(mapping = aes(x = fun, y = like)) + 
-#   geom_point(alpha = 0.4, size = .5) + 
-#   geom_line(aes(y = pred), colour = "red")  + 
-#   geom_abline(intercept = 69, slope = -.65, color  = "darkblue") 
-
+mod_conf_residuos %>% ggplot(aes(x=attr)) +geom_jitter(aes(y=resid), alpha=.5)
 ```
 
+Os resíduos variam entre 4 e -4, o que parece ser não tão alto. Os resíduos aparecem com frequência próximos ao 0.   
 
+Se analisarmos o gênero, temos:
+```{r}
+mod_conf_residuos %>% ggplot(aes(x=gender)) +geom_jitter(aes(y=resid), alpha=.5)
+```
 
+Basicamente aparece a mesma faixa de valores, e há uma maior frequência dos resíduos próximos ao 0.
+
+## Análise do R²
+
+Vamos analisar o nosso R² e ver o quão bem esse modelo explica a nossa variável de saída.
+
+```{r}
+glance(mod_confianca) %>% select(r.squared, adj.r.squared, sigma, statistic, p.value)
+```
+
+Confesso que estou bem triste, esperava um R² maior com relação à essa análise... Mas é isso! Podemos concluir que essas variáveis, gênero e beleza, não explicam muito bem a questão da autoconfiança e a probabilidade que p1 acha que p2 tem de querer se encontrar com ele novamente.  
+
+Essa foi a análise dessa semana, espero que tenham curtido!
+Até a próxima.
