@@ -1,0 +1,52 @@
+---
+title: "Lab05CP2"
+author: "Paulo Vinicius Soares"
+date: "25 de agosto de 2017"
+output: 
+  html_document:
+        toc: true
+        toc_float: true
+        toc_depth: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r, warning = FALSE, message = FALSE}
+# Library Imports
+library(tidyverse)
+library(resample)
+library(tidyr)
+library(modelr)
+library(broom)
+library(GGally)
+library(pscl)
+```
+
+```{r}
+x = read_csv("https://raw.githubusercontent.com/nazareno/ciencia-de-dados-1/master/5-regressao/speed-dating/speed-dating2.csv") %>% 
+  mutate(dec = as.factor(dec), 
+         gender = as.factor(gender))
+gendermodel = glm(dec ~ gender+age+attr+fun+like+shar+amb, 
+                  data = x, 
+                  family = "binomial")
+tidy(gendermodel, conf.int = TRUE, exponentiate = TRUE)
+glance(gendermodel)
+pR2(gendermodel)
+
+expectativa_realidade = augment(gendermodel, 
+                                type.predict = "response") 
+
+expectativa_realidade %>% 
+  mutate(genderNum = ifelse(gender == "1", 1, 0)) %>% 
+  ggplot(aes(x = sports)) + 
+  geom_count(aes(y = genderNum), alpha = 0.5) + 
+  geom_line(aes(y = .fitted))
+
+expectativa_realidade = expectativa_realidade %>% 
+  mutate(categoria_prevista = ifelse(.fitted > .5, "1", "0"))
+
+table(expectativa_realidade$categoria_prevista, expectativa_realidade$gender)
+```
+
